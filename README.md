@@ -1,3 +1,3 @@
-# SCALASIM
+# SCALESIM
 
-Build an SIMD/SIMT architecture simulated by SCALASIM.
+Introduce Sparsity into SCALESIM.
