@@ -4,19 +4,24 @@ import configparser as cp
 class architecture:
     # read architecture config information
     def __init__(self):
-        self.run_name = "scale_run"
-        # Anand: ISSUE #2. Patch
+        self.arch_name = "scale_run"
+        
         self.use_user_bandwidth = False
 
-        self.array_rows = 4
-        self.array_cols = 4
-        self.acache_sz_kb = 256
-        self.bcache_sz_kb = 256
-        self.ccache_sz_kb = 128
+        self.array_rows     = 4
+        self.array_cols     = 4
+        self.abuffer_sz_kb  = 256
+        self.bbuffer_sz_kb  = 256
+        self.cbuffer_sz_kb  = 128
+        self.al1cache_sz_kb = 256
+        self.bl1cache_sz_kb = 256
+        self.al2cache_sz_kb = 256
+        self.bl2cache_sz_kb = 256
+        self.adram_offset   = 0 
+        self.bdram_offset   = 10000000
+        self.cdram_offset   = 20000000
+ 
         self.dataflow = 'ws'
-        self.acache_offset = 0
-        self.bcache_offset = 10000000
-        self.ccache_offset = 20000000
         self.workload = ""
         self.bandwidths = []
         self.valid_conf_flag = False
@@ -33,7 +38,7 @@ class architecture:
 
         # 读取general内容
         section = 'general'
-        self.run_name = config.get(section, 'arch_name')
+        self.arch_name = config.get(section, 'arch_name')
 
         # 读取run_presets内容
         section = 'presets'
@@ -49,14 +54,19 @@ class architecture:
 
         # 读取arch_presets内容
         section = 'architecture_presets'
-        self.array_rows = int(config.get(section, 'ArrayHeight'))
-        self.array_cols = int(config.get(section, 'ArrayWidth'))
-        self.acache_sz_kb = int(config.get(section, 'AcacheSramszkB'))
-        self.bcache_sz_kb = int(config.get(section, 'BcacheSramszkB'))
-        self.ccache_sz_kb = int(config.get(section, 'CcacheSramszkB'))
-        self.acache_offset = int(config.get(section, 'AcacheOffset'))
-        self.bcache_offset = int(config.get(section, 'BcacheOffset'))
-        self.ccache_offset = int(config.get(section, 'CcacheOffset'))
+        self.array_rows     = int(config.get(section, 'ArrayHeight'))
+        self.array_cols     = int(config.get(section, 'ArrayWidth'))
+        self.abuffer_sz_kb  = int(config.get(section, 'ABufferszkB'))
+        self.bbuffer_sz_kb  = int(config.get(section, 'BBufferszkB'))
+        self.cbuffer_sz_kb  = int(config.get(section, 'CBufferszkB'))
+        self.al1cache_sz_kb = int(config.get(section, 'AL1CacheszkB'))
+        self.bl1cache_sz_kb = int(config.get(section, 'BL1CacheszkB'))
+        self.al2cache_sz_kb = int(config.get(section, 'AL2CacheszkB'))
+        self.bl2cache_sz_kb = int(config.get(section, 'BL2CacheszkB'))
+        self.adram_offset   = int(config.get(section, 'ADramOffset'))
+        self.bdram_offset   = int(config.get(section, 'BDramOffset'))
+        self.cdram_offset   = int(config.get(section, 'CDramOffset'))
+        
         self.dataflow = config.get(section, 'Dataflow')
 
         if self.use_user_bandwidth:

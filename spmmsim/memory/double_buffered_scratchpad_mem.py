@@ -2,11 +2,11 @@ import time
 import numpy as np
 from tqdm import tqdm
 
-from utils.read_buffer import read_buffer as rdbuf
-from utils.read_buffer_estimate_bw import ReadBufferEstimateBw as rdbuf_est
-from utils.read_port import read_port as rdport
-from utils.write_buffer import write_buffer as wrbuf
-from utils.write_port import write_port as wrport
+from .utils.read_buffer import read_buffer as rdbuf
+from .utils.read_buffer_estimate_bw import ReadBufferEstimateBw as rdbuf_est
+from .utils.read_port import read_port as rdport
+from .utils.write_buffer import write_buffer as wrbuf
+from .utils.write_port import write_port as wrport
 
 
 class double_buffered_scratchpad:
