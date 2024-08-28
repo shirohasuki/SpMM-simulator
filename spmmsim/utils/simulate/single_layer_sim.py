@@ -34,43 +34,43 @@ class single_layer_sim:
         self.compute_util = 0
 
         # Report items : BW report
-        self.avg_ifmap_sram_bw = 0
-        self.avg_filter_sram_bw = 0
-        self.avg_ofmap_sram_bw = 0
-        self.avg_ifmap_dram_bw = 0
-        self.avg_filter_dram_bw = 0
-        self.avg_ofmap_dram_bw = 0
+        self.avg_abuffer_bw = 0
+        self.avg_bbuffer_bw = 0
+        self.avg_cbuffer_bw = 0
+        self.avg_adram_bw = 0
+        self.avg_bdram_bw = 0
+        self.avg_cdram_bw = 0
 
         # Report items : Detailed Access report
         # ABuffer
-        self.ifmap_sram_start_cycle = 0
-        self.ifmap_sram_stop_cycle = 0
-        self.ifmap_sram_reads = 0
+        self.abuffer_start_cycle = 0
+        self.abuffer_stop_cycle = 0
+        self.abuffer_reads = 0
         
         # BBuffer
-        self.filter_sram_start_cycle = 0
-        self.filter_sram_stop_cycle = 0
-        self.filter_sram_reads = 0
+        self.bbuffer_start_cycle = 0
+        self.bbuffer_stop_cycle = 0
+        self.bbuffer_reads = 0
 
         # CBuffer
-        self.ofmap_sram_start_cycle = 0
-        self.ofmap_sram_stop_cycle = 0
-        self.ofmap_sram_writes = 0
+        self.cbuffer_start_cycle = 0
+        self.cbuffer_stop_cycle = 0
+        self.cbuffer_writes = 0
 
         # ADram
-        self.ifmap_dram_start_cycle = 0
-        self.ifmap_dram_stop_cycle = 0
-        self.ifmap_dram_reads = 0
+        self.adram_start_cycle = 0
+        self.adram_stop_cycle = 0
+        self.adram_reads = 0
 
         # BDram
-        self.filter_dram_start_cycle = 0
-        self.filter_dram_stop_cycle = 0
-        self.filter_dram_reads = 0
+        self.bdram_start_cycle = 0
+        self.bdram_stop_cycle = 0
+        self.bdram_reads = 0
 
         # CDram
-        self.ofmap_dram_start_cycle = 0
-        self.ofmap_dram_stop_cycle = 0
-        self.ofmap_dram_writes = 0
+        self.cdram_start_cycle = 0
+        self.cdram_stop_cycle = 0
+        self.cdram_writes = 0
 
         self.params_set_flag = False
         self.memory_system_ready_flag = False
@@ -116,23 +116,23 @@ class single_layer_sim:
 
         # 1. Setup and the get the demand from compute system
 
-        # 1.1 Get the operand matrices
-        _, ifmap_op_mat = self.op_mat_obj.get_ifmap_matrix()
-        _, filter_op_mat = self.op_mat_obj.get_filter_matrix()
-        _, ofmap_op_mat = self.op_mat_obj.get_ofmap_matrix()
+        # 1.1 Get the operand matrices 获取操作数矩阵
+        _, a_op_mat = self.op_mat_obj.get_a_matrix()
+        _, b_op_mat = self.op_mat_obj.get_b_matrix()
+        _, c_op_mat = self.op_mat_obj.get_c_matrix()
 
-        self.num_compute = self.workload.get_layer_num_ofmap_px(self.layer_id) \
+        self.num_compute = self.workload.get_layer_num_c_px(self.layer_id) \
                            * self.workload.get_layer_window_size(self.layer_id)
 
         # 1.2 Get the prefetch matrices for both operands
         self.compute_system.set_params(config_obj=self.config,
-                                       ifmap_op_mat=ifmap_op_mat,
-                                       filter_op_mat=filter_op_mat,
-                                       ofmap_op_mat=ofmap_op_mat)
+                                       a_op_mat=a_op_mat,
+                                       b_op_mat=b_op_mat,
+                                       c_op_mat=c_op_mat)
 
         # 1.3 Get the no compute demand matrices from for 2 operands and the output
-        ifmap_prefetch_mat, filter_prefetch_mat = self.compute_system.get_prefetch_matrices()
-        ifmap_demand_mat, filter_demand_mat, ofmap_demand_mat = self.compute_system.get_demand_matrices()
+        a_prefetch_mat, b_prefetch_mat = self.compute_system.get_prefetch_matrices()
+        a_demand_mat, b_demand_mat, c_demand_mat = self.compute_system.get_demand_matrices()
         #print('DEBUG: Compute operations done')
         # 2. Setup the memory system and run the demands through it to find any memory bottleneck and generate traces
 
@@ -141,20 +141,20 @@ class single_layer_sim:
             word_size = 1           # bytes, this can be incorporated in the config file
             active_buf_frac = 0.5   # This can be incorporated in the config as well
 
-            ifmap_buf_size_kb, filter_buf_size_kb, ofmap_buf_size_kb = self.config.get_mem_sizes()
-            ifmap_buf_size_bytes = 1024 * ifmap_buf_size_kb
-            filter_buf_size_bytes = 1024 * filter_buf_size_kb
-            ofmap_buf_size_bytes = 1024 * ofmap_buf_size_kb
+            a_buf_size_kb, b_buf_size_kb, c_buf_size_kb = self.config.get_mem_sizes()
+            a_buf_size_bytes = 1024 * a_buf_size_kb
+            b_buf_size_bytes = 1024 * b_buf_size_kb
+            c_buf_size_bytes = 1024 * c_buf_size_kb
 
-            ifmap_backing_bw = 1
-            filter_backing_bw = 1
-            ofmap_backing_bw = 1
+            a_backing_bw = 1
+            b_backing_bw = 1
+            c_backing_bw = 1
             estimate_bandwidth_mode = False
             if self.config.use_user_dram_bandwidth():
                 bws = self.config.get_bandwidths_as_list()
-                ifmap_backing_bw = bws[0]
-                filter_backing_bw = bws[0]
-                ofmap_backing_bw = bws[0]
+                a_backing_bw = bws[0]
+                b_backing_bw = bws[0]
+                c_backing_bw = bws[0]
 
             else:
                 dataflow = self.config.get_dataflow()
@@ -162,135 +162,136 @@ class single_layer_sim:
                 estimate_bandwidth_mode = True
 
                 # The number 10 elems per cycle is arbitrary
-                ifmap_backing_bw = 10
-                filter_backing_bw = 10
-                ofmap_backing_bw = arr_col
+                a_backing_bw = 10
+                b_backing_bw = 10
+                c_backing_bw = arr_col
 
-            self.memory_system.set_params(
-                    word_size=word_size,
-                    ifmap_buf_size_bytes=ifmap_buf_size_bytes,
-                    filter_buf_size_bytes=filter_buf_size_bytes,
-                    ofmap_buf_size_bytes=ofmap_buf_size_bytes,
-                    rd_buf_active_frac=active_buf_frac, wr_buf_active_frac=active_buf_frac,
-                    ifmap_backing_buf_bw=ifmap_backing_bw,
-                    filter_backing_buf_bw=filter_backing_bw,
-                    ofmap_backing_buf_bw=ofmap_backing_bw,
-                    verbose=self.verbose,
-                    estimate_bandwidth_mode=estimate_bandwidth_mode
+            # setting memory system
+            self.memory_system.set_params(word_size                 = word_size,
+                                          a_buf_size_bytes      = a_buf_size_bytes,
+                                          b_buf_size_bytes     = b_buf_size_bytes,
+                                          c_buf_size_bytes      = c_buf_size_bytes,
+                                          rd_buf_active_frac        = active_buf_frac, 
+                                          wr_buf_active_frac        = active_buf_frac,
+                                          a_backing_buf_bw      = a_backing_bw,
+                                          b_backing_buf_bw     = b_backing_bw,
+                                          c_backing_buf_bw      = c_backing_bw,
+                                          verbose                   = self.verbose,
+                                          estimate_bandwidth_mode   = estimate_bandwidth_mode
             )
 
         # 2.2 Install the prefetch matrices to the read buffers to finish setup
         if self.config.use_user_dram_bandwidth() :
-            self.memory_system.set_read_buf_prefetch_matrices(ifmap_prefetch_mat=ifmap_prefetch_mat,
-                                                              filter_prefetch_mat=filter_prefetch_mat)
+            self.memory_system.set_read_buf_prefetch_matrices(a_prefetch_mat=a_prefetch_mat,
+                                                              b_prefetch_mat=b_prefetch_mat)
 
         # 2.3 Start sending the requests through the memory system until
-        # all the OFMAP memory requests have been serviced
-        self.memory_system.service_memory_requests(ifmap_demand_mat, filter_demand_mat, ofmap_demand_mat)
+        # all the c memory requests have been serviced
+        self.memory_system.service_memory_requests(a_demand_mat, b_demand_mat, c_demand_mat)
 
         self.runs_ready = True
 
     # This will write the traces
-    def save_traces(self, top_path):
-        assert self.params_set_flag, 'Parameters are not set'
+    # def save_traces(self, top_path):
+    #     assert self.params_set_flag, 'Parameters are not set'
 
-        dir_name = top_path + '/layer' + str(self.layer_id)
-        if not os.path.isdir(dir_name):
-            os.mkdir(dir_name)
+    #     dir_name = top_path + '/layer' + str(self.layer_id)
+    #     if not os.path.isdir(dir_name):
+    #         os.mkdir(dir_name)
 
-        ifmap_sram_filename = dir_name +  '/IFMAP_SRAM_TRACE.csv'
-        filter_sram_filename = dir_name + '/FILTER_SRAM_TRACE.csv'
-        ofmap_sram_filename = dir_name +  '/OFMAP_SRAM_TRACE.csv'
+    #     abuffer_filename = dir_name +  '/abuffer_TRACE.csv'
+    #     bbuffer_filename = dir_name + '/bbuffer_TRACE.csv'
+    #     cbuffer_filename = dir_name +  '/cbuffer_TRACE.csv'
 
-        ifmap_dram_filename = dir_name +  '/IFMAP_DRAM_TRACE.csv'
-        filter_dram_filename = dir_name + '/FILTER_DRAM_TRACE.csv'
-        ofmap_dram_filename = dir_name +  '/OFMAP_DRAM_TRACE.csv'
+    #     adram_filename = dir_name +  '/adram_TRACE.csv'
+    #     bdram_filename = dir_name + '/bdram_TRACE.csv'
+    #     cdram_filename = dir_name +  '/cdram_TRACE.csv'
 
-        self.memory_system.print_ifmap_sram_trace(ifmap_sram_filename)
-        self.memory_system.print_ifmap_dram_trace(ifmap_dram_filename)
-        self.memory_system.print_filter_sram_trace(filter_sram_filename)
-        self.memory_system.print_filter_dram_trace(filter_dram_filename)
-        self.memory_system.print_ofmap_sram_trace(ofmap_sram_filename)
-        self.memory_system.print_ofmap_dram_trace(ofmap_dram_filename)
-
-    #
-    def calc_report_data(self):
-        assert self.runs_ready, 'Runs are not done yet'
-
-        # Compute report
-        self.total_cycles = self.memory_system.get_total_compute_cycles()
-        self.stall_cycles = self.memory_system.get_stall_cycles()
-        self.overall_util = (self.num_compute * 100) / (self.total_cycles * self.num_mac_unit)
-        self.mapping_eff = self.compute_system.get_avg_mapping_efficiency() * 100
-        self.compute_util = self.compute_system.get_avg_compute_utilization() * 100
-
-        # BW report
-        self.ifmap_sram_reads = self.compute_system.get_ifmap_requests()
-        self.filter_sram_reads = self.compute_system.get_filter_requests()
-        self.ofmap_sram_writes = self.compute_system.get_ofmap_requests()
-        self.avg_ifmap_sram_bw = self.ifmap_sram_reads / self.total_cycles
-        self.avg_filter_sram_bw = self.filter_sram_reads / self.total_cycles
-        self.avg_ofmap_sram_bw = self.ofmap_sram_writes / self.total_cycles
-
-        # Detail report
-        self.ifmap_sram_start_cycle, self.ifmap_sram_stop_cycle \
-            = self.memory_system.get_ifmap_sram_start_stop_cycles()
-
-        self.filter_sram_start_cycle, self.filter_sram_stop_cycle \
-            = self.memory_system.get_filter_sram_start_stop_cycles()
-
-        self.ofmap_sram_start_cycle, self.ofmap_sram_stop_cycle \
-            = self.memory_system.get_ofmap_sram_start_stop_cycles()
-
-        self.ifmap_dram_start_cycle, self.ifmap_dram_stop_cycle, self.ifmap_dram_reads \
-            = self.memory_system.get_ifmap_dram_details()
-
-        self.filter_dram_start_cycle, self.filter_dram_stop_cycle, self.filter_dram_reads \
-            = self.memory_system.get_filter_dram_details()
-
-        self.ofmap_dram_start_cycle, self.ofmap_dram_stop_cycle, self.ofmap_dram_writes \
-            = self.memory_system.get_ofmap_dram_details()
-
-        # BW calc for DRAM access
-        self.avg_ifmap_dram_bw = self.ifmap_dram_reads / (self.ifmap_dram_stop_cycle - self.ifmap_dram_start_cycle + 1)
-        self.avg_filter_dram_bw = self.filter_dram_reads / (self.filter_dram_stop_cycle - self.filter_dram_start_cycle + 1)
-        self.avg_ofmap_dram_bw = self.ofmap_dram_writes / (self.ofmap_dram_stop_cycle - self.ofmap_dram_start_cycle + 1)
-
-        self.report_items_ready = True
+    #     self.memory_system.print_abuffer_trace(abuffer_filename)
+    #     self.memory_system.print_adram_trace(adram_filename)
+    #     self.memory_system.print_bbuffer_trace(bbuffer_filename)
+    #     self.memory_system.print_bdram_trace(bdram_filename)
+    #     self.memory_system.print_cbuffer_trace(cbuffer_filename)
+    #     self.memory_system.print_cdram_trace(cdram_filename)
 
     #
-    def get_layer_id(self):
-        assert self.params_set_flag, 'Parameters are not set yet'
-        return self.layer_id
+    # def calc_report_data(self):
+    #     assert self.runs_ready, 'Runs are not done yet'
 
-    #
-    def get_compute_report_items(self):
-        if not self.report_items_ready:
-            self.calc_report_data()
+    #     # Compute report
+    #     self.total_cycles = self.memory_system.get_total_compute_cycles()
+    #     self.stall_cycles = self.memory_system.get_stall_cycles()
+    #     self.overall_util = (self.num_compute * 100) / (self.total_cycles * self.num_mac_unit)
+    #     self.mapping_eff = self.compute_system.get_avg_mapping_efficiency() * 100
+    #     self.compute_util = self.compute_system.get_avg_compute_utilization() * 100
 
-        items = [self.total_cycles, self.stall_cycles, self.overall_util, self.mapping_eff, self.compute_util]
-        return items
+    #     # BW report
+    #     self.abuffer_reads = self.compute_system.get_a_requests()
+    #     self.bbuffer_reads = self.compute_system.get_b_requests()
+    #     self.cbuffer_writes = self.compute_system.get_c_requests()
+    #     self.avg_abuffer_bw = self.abuffer_reads / self.total_cycles
+    #     self.avg_bbuffer_bw = self.bbuffer_reads / self.total_cycles
+    #     self.avg_cbuffer_bw = self.cbuffer_writes / self.total_cycles
 
-    #
-    def get_bandwidth_report_items(self):
-        if not self.report_items_ready:
-            self.calc_report_data()
+    #     # Detail report
+    #     self.abuffer_start_cycle, self.abuffer_stop_cycle \
+    #         = self.memory_system.get_abuffer_start_stop_cycles()
 
-        items = [self.avg_ifmap_sram_bw, self.avg_filter_sram_bw, self.avg_ofmap_sram_bw]
-        items += [self.avg_ifmap_dram_bw, self.avg_filter_dram_bw, self.avg_ofmap_dram_bw]
+    #     self.bbuffer_start_cycle, self.bbuffer_stop_cycle \
+    #         = self.memory_system.get_bbuffer_start_stop_cycles()
 
-        return items
+    #     self.cbuffer_start_cycle, self.cbuffer_stop_cycle \
+    #         = self.memory_system.get_cbuffer_start_stop_cycles()
 
-    #
-    def get_detail_report_items(self):
-        if not self.report_items_ready:
-            self.calc_report_data()
+    #     self.adram_start_cycle, self.adram_stop_cycle, self.adram_reads \
+    #         = self.memory_system.get_adram_details()
 
-        items = [self.ifmap_sram_start_cycle, self.ifmap_sram_stop_cycle, self.ifmap_sram_reads]
-        items += [self.filter_sram_start_cycle, self.filter_sram_stop_cycle, self.filter_sram_reads]
-        items += [self.ofmap_sram_start_cycle, self.ofmap_sram_stop_cycle, self.ofmap_sram_writes]
-        items += [self.ifmap_dram_start_cycle, self.ifmap_dram_stop_cycle, self.ifmap_dram_reads]
-        items += [self.filter_dram_start_cycle, self.filter_dram_stop_cycle, self.filter_dram_reads]
-        items += [self.ofmap_dram_start_cycle, self.ofmap_dram_stop_cycle, self.ofmap_dram_writes]
+    #     self.bdram_start_cycle, self.bdram_stop_cycle, self.bdram_reads \
+    #         = self.memory_system.get_bdram_details()
 
-        return items
+    #     self.cdram_start_cycle, self.cdram_stop_cycle, self.cdram_writes \
+    #         = self.memory_system.get_cdram_details()
+
+    #     # BW calc for DRAM access
+    #     self.avg_adram_bw = self.adram_reads / (self.adram_stop_cycle - self.adram_start_cycle + 1)
+    #     self.avg_bdram_bw = self.bdram_reads / (self.bdram_stop_cycle - self.bdram_start_cycle + 1)
+    #     self.avg_cdram_bw = self.cdram_writes / (self.cdram_stop_cycle - self.cdram_start_cycle + 1)
+
+    #     self.report_items_ready = True
+
+    # #
+    # def get_layer_id(self):
+    #     assert self.params_set_flag, 'Parameters are not set yet'
+    #     return self.layer_id
+
+    # #
+    # def get_compute_report_items(self):
+    #     if not self.report_items_ready:
+    #         self.calc_report_data()
+
+    #     items = [self.total_cycles, self.stall_cycles, self.overall_util, self.mapping_eff, self.compute_util]
+    #     return items
+
+    # #
+    # def get_bandwidth_report_items(self):
+    #     if not self.report_items_ready:
+    #         self.calc_report_data()
+
+    #     items = [self.avg_abuffer_bw, self.avg_bbuffer_bw, self.avg_cbuffer_bw]
+    #     items += [self.avg_adram_bw, self.avg_bdram_bw, self.avg_cdram_bw]
+
+    #     return items
+
+    # #
+    # def get_detail_report_items(self):
+    #     if not self.report_items_ready:
+    #         self.calc_report_data()
+
+    #     items = [self.abuffer_start_cycle, self.abuffer_stop_cycle, self.abuffer_reads]
+    #     items += [self.bbuffer_start_cycle, self.bbuffer_stop_cycle, self.bbuffer_reads]
+    #     items += [self.cbuffer_start_cycle, self.cbuffer_stop_cycle, self.cbuffer_writes]
+    #     items += [self.adram_start_cycle, self.adram_stop_cycle, self.adram_reads]
+    #     items += [self.bdram_start_cycle, self.bdram_stop_cycle, self.bdram_reads]
+    #     items += [self.cdram_start_cycle, self.cdram_stop_cycle, self.cdram_writes]
+
+    #     return items

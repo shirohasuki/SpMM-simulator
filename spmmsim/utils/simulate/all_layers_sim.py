@@ -3,18 +3,21 @@ sys.path.append("../../../")
 
 from spmmsim.utils.config.architecture import architecture as arch
 from spmmsim.utils.config.workload import workload 
-from single_layer_sim import single_layer_sim as layer_sim
+from .single_layer_sim import single_layer_sim as layer_sim
 
 import os
 
 
 class all_layers_sim:
-    def __init__(self):
+    def __init__(self, 
+                 rst_path,
+                 rpt_path,
+                 ):
         self.arch = arch()
         self.workload = workload()
 
-        self.output_path = "../../../output"
-        self.rpt_path = "./"
+        self.rst_path = rst_path
+        self.rpt_path = rpt_path + '/' + self.arch.get_run_name()
         self.verbose = True
         self.save_trace = True
 
@@ -25,14 +28,13 @@ class all_layers_sim:
         self.params_set_flag = False
         self.all_layer_run_done = False
     
-    def set_params(self, arch_obj=arch(), workload_obj=workload(),
-                   output_path="./", verbosity=True, save_trace=True):
+    def set_params(self, arch_obj=arch(), workload_obj=workload(), 
+                   verbosity=True, save_trace=True):
 
-        self.arch = arch_obj
-        self.workload = workload_obj
+        self.arch       = arch_obj
+        self.workload   = workload_obj
 
-        self.output_path = output_path
-        self.verbose = verbosity
+        self.verbose    = verbosity
         self.save_trace = save_trace
 
         # Calculate inferrable parameters here
@@ -54,10 +56,8 @@ class all_layers_sim:
 
             self.single_layer_sim_object_list.append(this_layer_sim)
 
-        rpt_path = self.output_path + '/rpt' + self.arch.get_run_name()
-        if not os.path.isdir(rpt_path):
-            os.mkdir(rpt_path)
-        self.rpt_path = rpt_path
+        if not os.path.isdir(self.rpt_path):
+            os.mkdir(self.rpt_path)
 
         # 2. Run each layer
         for single_layer_obj in self.single_layer_sim_object_list:
