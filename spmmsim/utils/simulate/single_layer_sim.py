@@ -42,26 +42,32 @@ class single_layer_sim:
         self.avg_ofmap_dram_bw = 0
 
         # Report items : Detailed Access report
+        # ABuffer
         self.ifmap_sram_start_cycle = 0
         self.ifmap_sram_stop_cycle = 0
         self.ifmap_sram_reads = 0
-
+        
+        # BBuffer
         self.filter_sram_start_cycle = 0
         self.filter_sram_stop_cycle = 0
         self.filter_sram_reads = 0
 
+        # CBuffer
         self.ofmap_sram_start_cycle = 0
         self.ofmap_sram_stop_cycle = 0
         self.ofmap_sram_writes = 0
 
+        # ADram
         self.ifmap_dram_start_cycle = 0
         self.ifmap_dram_stop_cycle = 0
         self.ifmap_dram_reads = 0
 
+        # BDram
         self.filter_dram_start_cycle = 0
         self.filter_dram_stop_cycle = 0
         self.filter_dram_reads = 0
 
+        # CDram
         self.ofmap_dram_start_cycle = 0
         self.ofmap_dram_stop_cycle = 0
         self.ofmap_dram_writes = 0
@@ -73,12 +79,12 @@ class single_layer_sim:
 
     def set_params(self,
                    layer_id=0,
-                   config_obj=arch(), workloadlogy_obj=workload(),
+                   config_obj=arch(), workload_obj=workload(),
                    verbose=True):
 
         self.layer_id = layer_id
         self.config = config_obj
-        self.workload = workloadlogy_obj
+        self.workload = workload_obj
 
         self.op_mat_obj.set_params(layer_id=self.layer_id,
                                    config_obj=self.config,
@@ -93,9 +99,9 @@ class single_layer_sim:
         elif self.dataflow == 'is':
             self.compute_system = systolic_compute_is()
 
-        arr_dims =self.config.get_array_dims()
+        arr_dims = self.config.get_array_dims()
         self.num_mac_unit = arr_dims[0] * arr_dims[1]
-        self.verbose=verbose
+        self.verbose = verbose
 
         self.params_set_flag = True
 
