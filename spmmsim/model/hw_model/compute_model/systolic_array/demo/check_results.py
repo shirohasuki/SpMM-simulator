@@ -3,7 +3,7 @@ sys.path.append("../")
 
 from SystolicArray import SystolicArray
 from SparseMatirx import SparseMatrix
-from IndexBuffer import IndexBuffer
+from spmmsim.model.hw_model.compute_model.systolic_array.utils.IndexBuffer import IndexBuffer
 from SparseCompution import SparseCompution
 import numpy as np
 

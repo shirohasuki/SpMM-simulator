@@ -21,11 +21,14 @@ You can use this repository as a lib by `Interface.py`.
 - output parameter1: ren
 - output parameter2: raddr
 
-**Interface2 connect_to_matmul:** This function connect our systolic array to the input matmul. It will send the access requests needed for the computation process.
-- input parameter1: A matrix
-- input parameter2: B matrix
-- input parameter3: if Density?(True) or Sparsity?(False)
-- output parameter: cycles
+**Interface2 connect_to_matmul:** This function connect our systolic array to the input matmul. It will evaluate the cycles of matmul caculation.
+`matmul_eval(systolic_row, systolic_col, matrix_A, matrix_B, mode=0, Sparsity=False)`
+- systolic_row: rows of systolic array
+- systolic_col: cols of systolic array
+- matrix_A: A matrix
+- matrix_B: B matrix
+- Sparsity: if Density?(True) or Sparsity?(False)
+- return: cycles
 (will not output the C Matrix result)
 
 

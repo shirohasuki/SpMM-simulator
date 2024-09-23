@@ -1,5 +1,5 @@
 from SystolicArray import SystolicArray
-from IndexBuffer import IndexBuffer
+from utils.IndexBuffer import IndexBuffer
 import numpy as np
 
 class SparseCompution:
