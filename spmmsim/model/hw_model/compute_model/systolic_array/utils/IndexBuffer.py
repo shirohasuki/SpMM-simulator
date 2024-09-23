@@ -1,5 +1,5 @@
 import numpy as np
-from SparseMatirx import SparseMatrix
+from .SparseMatirx import SparseMatrix
 
 class IndexBuffer:
     def __init__(self,row_num,col_num,systolic_col):
