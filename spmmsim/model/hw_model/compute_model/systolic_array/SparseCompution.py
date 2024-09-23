@@ -1,5 +1,5 @@
-from SystolicArray import SystolicArray
-from utils.IndexBuffer import IndexBuffer
+from spmmsim.model.hw_model.compute_model.systolic_array.SystolicArray import SystolicArray
+from spmmsim.model.hw_model.compute_model.systolic_array.utils.IndexBuffer import IndexBuffer
 import numpy as np
 
 class SparseCompution:
@@ -9,7 +9,7 @@ class SparseCompution:
         self.systolic_col = systolic_col
 
         self.index_buffer   = IndexBuffer(row_num=buffer_row,col_num=buffer_col,systolic_col=systolic_col)
-        self.systolic_array = SystolicArray(buffer_row,systolic_col)
+        self.systolic_array = SystolicArray(buffer_row, systolic_col)
         self.systolic_array.reset()
 
 

@@ -1,4 +1,4 @@
-from ProcessingElement import ProcessingElement as PE
+from spmmsim.model.hw_model.compute_model.systolic_array.ProcessingElement import ProcessingElement as PE
 import numpy as np
 
 class SystolicArray:
