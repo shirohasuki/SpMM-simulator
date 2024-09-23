@@ -1,14 +1,14 @@
 import sys
-sys.path.append("../")
+sys.path.append("../../../../../../")
 
-from SystolicArray import SystolicArray
-from SparseMatirx import SparseMatrix
-from spmmsim.model.hw_model.compute_model.systolic_array.utils.IndexBuffer import IndexBuffer
-from SparseCompution import SparseCompution
 import numpy as np
+from spmmsim.model.hw_model.compute_model.systolic_array.SystolicArray import SystolicArray
+from spmmsim.model.hw_model.compute_model.systolic_array.SparseCompution import SparseCompution
+from spmmsim.model.hw_model.compute_model.systolic_array.utils.SparseMatirx import SparseMatrix
+from spmmsim.model.hw_model.compute_model.systolic_array.utils.IndexBuffer import IndexBuffer
 
 
-matrix = SparseMatrix(2048,2048,1/16)
+matrix = SparseMatrix(2048, 2048, 1/16)
 A = matrix.matrix
 # print(matrix.matrix)
 B = np.random.randint(0, 10, size=(2048, 128))

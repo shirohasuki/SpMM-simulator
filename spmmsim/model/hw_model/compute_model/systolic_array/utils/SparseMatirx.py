@@ -1,21 +1,22 @@
 import numpy as np
+
 class SparseMatrix:
     def __init__(self, rows, cols, sparsity=1/16, value_range=(0, 5)):
         """
         初始化稀疏矩阵。
         :param rows: 矩阵的行数
         :param cols: 矩阵的列数
-        :param sparsity: 稀疏度（0 到 1），表示非零元素的比例
+        :param sparsity: 稀疏度(0 到 1)，表示非零元素的比例
         :param value_range: 非零元素的取值范围，默认 [0, 5]
         """
         self.rows = rows
         self.cols = cols
         self.sparsity = sparsity
         self.value_range = value_range
-        self.matrix = self._generate_sparse_matrix()
+        self.matrix = self.generate_sparse_matrix()
         self.to_csr()
 
-    def _generate_sparse_matrix(self):
+    def generate_sparse_matrix(self):
         """
         根据指定的稀疏度生成稀疏矩阵
         """
@@ -35,7 +36,7 @@ class SparseMatrix:
     def to_csr(self):
         """
         将稀疏矩阵转换为 CSR 格式
-        :return: CSR 格式的三个数组：data, indices, indptr
+        :return: CSR 格式的三个数组: data, indices, indptr
         """
         data = []  # 非零元素值
         indices = []  # 非零元素的列索引
