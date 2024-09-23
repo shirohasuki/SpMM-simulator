@@ -133,12 +133,8 @@ class SystolicArray:
                         for i_ in range(self.row):
                             result[i_] = self.pe_array[i_][self.col-1].partial_sum
                         temp_c_.append(result)
-                # import pdb;pdb.set_trace()
                 if enable:
-            # print(np.array(temp_c_))
                     temp_c_ = self.deparallelogramize(np.array(temp_c_))
-                # print(temp_c_)
-                # import pdb;pdb.set_trace()
                     temp_c = temp_c + temp_c_
             if enable:
                 C[self.row*i:self.row*i+self.row,:] = temp_c
