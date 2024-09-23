@@ -1,8 +1,8 @@
-from SystolicArray import SystolicArray
+import numpy as np
+from spmmsim.model.hw_model.compute_model.systolic_array.SystolicArray import SystolicArray
+from spmmsim.model.hw_model.compute_model.systolic_array.SparseCompution import SparseCompution
 from spmmsim.model.hw_model.compute_model.systolic_array.utils.SparseMatirx import SparseMatrix
 from spmmsim.model.hw_model.compute_model.systolic_array.utils.IndexBuffer import IndexBuffer
-from SparseCompution import SparseCompution
-import numpy as np
 
 
 def matmul_eval(systolic_row, systolic_col, matrix_A, matrix_B, mode=0, Sparsity=False):
@@ -12,7 +12,7 @@ def matmul_eval(systolic_row, systolic_col, matrix_A, matrix_B, mode=0, Sparsity
         for i in buffer_width:
             sparse_compute = SparseCompution(systolic_row, i, systolic_col)
             sparse_compute.systolic_array.reset()
-            c = sparse_compute.compute(matrix_A,matrix_B,mode)
+            c = sparse_compute.compute(matrix_A, matrix_B, mode)
             cycle = sparse_compute.systolic_array.cycle
             cycles.append(cycle)
             print(f"脉动阵列为{systolic_row}x{systolic_col}, buf宽度为{i}, 填充方式为{mode}, cycle为{cycle}")
@@ -27,27 +27,27 @@ def matmul_eval(systolic_row, systolic_col, matrix_A, matrix_B, mode=0, Sparsity
 A = SparseMatrix(2048, 2048, 1/16)
 B = np.random.randint(0, 10, size=(2048, 128))
 
-eval(32,  4, A, B, 0, True)
-eval(32,  4, A, B, 1, False)
-eval(32,  4, A, B, 1, True)
-eval(32,  8, A, B, 0, False)
-eval(32,  8, A, B, 0, True)
-eval(32,  8, A, B, 1, False)
-eval(32,  8, A, B, 1, True)
-eval(32, 16, A, B, 0, False)
-eval(32, 16, A, B, 0, True)
-eval(32, 16, A, B, 1, False)
-eval(32, 16, A, B, 1, True)
-eval(4,  32, A, B, 0, False)
-eval(4,  32, A, B, 0, True)
-eval(4,  32, A, B, 1, False)
-eval(4,  32, A, B, 1, True)
-eval(8,  32, A, B, 0, False)
-eval(8,  32, A, B, 0, True)
-eval(8,  32, A, B, 1, False)
-eval(8,  32, A, B, 1, True)
-eval(16, 32, A, B, 0, False)
-eval(16, 32, A, B, 0, True)
-eval(16, 32, A, B, 1, False)
-eval(16, 32, A, B, 1, True)
+matmul_eval(32,  4, A, B, 0, True)
+matmul_eval(32,  4, A, B, 1, False)
+matmul_eval(32,  4, A, B, 1, True)
+matmul_eval(32,  8, A, B, 0, False)
+matmul_eval(32,  8, A, B, 0, True)
+matmul_eval(32,  8, A, B, 1, False)
+matmul_eval(32,  8, A, B, 1, True)
+matmul_eval(32, 16, A, B, 0, False)
+matmul_eval(32, 16, A, B, 0, True)
+matmul_eval(32, 16, A, B, 1, False)
+matmul_eval(32, 16, A, B, 1, True)
+matmul_eval(4,  32, A, B, 0, False)
+matmul_eval(4,  32, A, B, 0, True)
+matmul_eval(4,  32, A, B, 1, False)
+matmul_eval(4,  32, A, B, 1, True)
+matmul_eval(8,  32, A, B, 0, False)
+matmul_eval(8,  32, A, B, 0, True)
+matmul_eval(8,  32, A, B, 1, False)
+matmul_eval(8,  32, A, B, 1, True)
+matmul_eval(16, 32, A, B, 0, False)
+matmul_eval(16, 32, A, B, 0, True)
+matmul_eval(16, 32, A, B, 1, False)
+matmul_eval(16, 32, A, B, 1, True)
 
