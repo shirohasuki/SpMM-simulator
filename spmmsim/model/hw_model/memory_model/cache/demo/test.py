@@ -1,13 +1,16 @@
 import argparse
 import os
 import configparser as cp
+
+import sys
+sys.path.append("../")
 from cachesim import CacheSim
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('-c', metavar='Config file', type=str,
-                        default="./scale.cfg",
+                        default="../scale.cfg",
                         help="Path to the config file"
                         )
 
