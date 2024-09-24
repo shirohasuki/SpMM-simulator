@@ -39,7 +39,9 @@ for i in range(0, 1000, 1):
 sim.sim.print_info()
 
 # 返回memory_access hit或者miss
-def memory_access_eval(raddr):
+def memory_access_eval(raddr, latency, 
+                        way, size, cacheline_size, replacement, 
+                        addr_size=32, data_size=data_size):
     if_hit = False
     latency = 0
     return if_hit, latency
