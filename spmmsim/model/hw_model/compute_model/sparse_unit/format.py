@@ -7,7 +7,9 @@ class SparseRepresentFormat:
         elif (format == 'csc'):
             self.sparse_matrix = self.density_to_csc(dense_matrix)
         elif (format == 'coo'):
-            self.sparse_matrix = self.density_to_coo(dense_matrix)
+            self.sparse_matrix = self.density_to_coo(dense_matrix)    
+        elif (format == 'xyv_coo'): # 内部总线协议
+            self.sparse_matrix = self.xyv_to_coo(dense_matrix)
         else: 
             self.sparse_matrix = 0
     def density_to_csr(self, dense_matrix):
@@ -17,6 +19,9 @@ class SparseRepresentFormat:
     
     def density_to_coo(self, dense_matrix):
         return coo_matrix(dense_matrix)
+    
+    def xyv_to_coo(self, xyv_matrix):
+        return coo_matrix((xyv_matrix[2], (xyv_matrix[0], xyv_matrix[1])))
 
 
 if __name__ == '__main__':

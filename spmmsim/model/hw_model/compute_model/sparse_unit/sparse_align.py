@@ -1,99 +1,138 @@
 import numpy as np
-import matplotlib.pyplot as plt
-from numpy.lib.stride_tricks import sliding_window_view
-
+from format import SparseRepresentFormat
 
 class SparseAlign:
-    def __init__(self, ):
-        self.matrix_row = 0
-        self.matrix_col = 0
-	
-    def col_dim_align(self, sparse_matrix, matrix_row, matrix_col):
-        # col_dim_align 前矩阵
-        # 将稀疏矩阵转换为密集矩阵以便操作
-        rows, cols = sparse_matrix.shape
-        dense_matrix = np.zeros((matrix_row, matrix_col), dtype=int)
-        for row in range(rows):
-            for col in range(cols):
-                dense_matrix[row][sparse_matrix[row, col]] = sparse_matrix[row, col]        
-
-        # 去除非0列
-        col_align_matrix = dense_matrix[:, [not np.all(dense_matrix[:, i] == 0) for i in range(dense_matrix.shape[1])]]
+    def __init__(self, A_matrix, B_matrix, A_sparsity=True, B_sparsity=False, mode="indirection", return_seq="access"):
+        assert A_sparsity != False, "A must be sparse"
+        assert not ((A_sparsity and B_sparsity == False) and (mode == "intersection")), \
+                "one-side sparsity please use indirection mode"
+        assert not ((A_sparsity and B_sparsity == True) and (mode == "indirection")), \
+                "two-side sparsity please use Intersection mode"
         
-        return col_align_matrix
-    
-    def row_dim_align(self, sparse_matrix, matrix_row, matrix_col):
-        # 将稀疏矩阵转换为密集矩阵以便操作
-        rows, cols = sparse_matrix.shape
-
-        # row_dim_align 前矩阵
-        dense_matrix = np.zeros((matrix_row, matrix_col), dtype=int)
-        for row in range(rows):
-            for col in range(cols):
-                dense_matrix[row][sparse_matrix[row, col]] = sparse_matrix[row, col]        
-
-        # 去除非 0 列
-        row_align_matrix = dense_matrix[[not np.all(dense_matrix[i] == 0) for i in range(dense_matrix.shape[0])], :]
+        self.a = A_matrix
+        self.b = B_matrix
         
-        return row_align_matrix
-
-    # WS 得到 A 矩阵的访存
-    def sliding_window(self, gate_matrix_a, window_size=(16, 16)):
-        # 获取矩阵的行列数
-        # print(gate_matrix_a)
-        rows, cols = gate_matrix_a.shape
-
-        # 计算需要填充的行和列，使得矩阵维度可以被16x16整除
-        row_padding = (window_size[0] - rows % window_size[0]) % window_size[0]
-        col_padding = (window_size[1] - cols % window_size[1]) % window_size[1]
-
-        # 使用np.pad填充矩阵，填充为-1, 得到可以整除的矩阵
-        padded_matrix = np.pad(gate_matrix_a, 
-                            ((0, row_padding), (0, col_padding)), 
-                            mode='constant', constant_values=-1)
-
-        tiled_matmul = sliding_window_view(padded_matrix, window_shape=window_size)
-        return tiled_matmul
-    
-    def aligned_access(self, tiled_matmul_a, gate_matrix_b):
-        A_access_seq = []
-        B_access_seq = []
-        PE_id = 0
-        for row_block in range(len(tiled_matmul_a)):
-            for PE_block in range(len(tiled_matmul_a[row_block])):
-                for PE in range(len(tiled_matmul_a[row_block][PE_block])):
-                    tiled_A = tiled_matmul_a[row_block][PE_block][PE]
-                    # 获取tiled_A每列的第一个非零元素
-                    tiled_B = tiled_A[np.argmax(tiled_A != 0, axis=0), np.arange(tiled_A.shape[1])]
-                    # 对于全零列，将其设为 0
-                    tiled_B[np.all(tiled_A == 0, axis=0)] = 0
-                    A_access_seq.append((PE_id, tiled_A))
-                    B_access_seq.append((PE_id, tiled_B))
-                    PE_id += 1
-                             
-        return A_access_seq, B_access_seq
-
-
+        self.a_seq = 0
+        self.b_seq = 0
         
+        # indirection是基于CSR的数据格式
+        if (mode == 'indirection'):
+            self.a_seq, self.b_seq = self.indirection(self.a, self.b)
+        # intersection是基于CSR(A)与CSC(B)的数据格式
+        elif (mode == 'intersection'): 
+            self.a_seq, self.b_seq = self.intersection(self.a, self.b)
+        else: 
+            self.a_seq = 0  
+            self.b_seq = 0
+
+    def indirection(self, A_matrix, B_matrix):
+        A_array = []
+        B_array = []
+        # A_matrix is in CSR format
+        for row_idx in range(A_matrix.shape[0]):
+            row_start = A_matrix.indptr[row_idx]
+            row_end = A_matrix.indptr[row_idx + 1]
+            
+            # Get A_matrix data block and corresponding column indices
+            a_block = A_matrix.data[row_start:row_end]
+            col_indices = A_matrix.indices[row_start:row_end]  # B_matrix的列索引
+
+            # Get corresponding values from B_matrix based on column indices
+            # B_matrix[:, col_indices] will get the values at corresponding columns for each row in B_matrix
+            b_block = B_matrix[row_idx, col_indices]  # 这里只取当前行 row_idx 的对应列
+
+            # Store (x, y, value) for A_matrix
+            A_array.extend([(row_idx, col_idx, a_val) for col_idx, a_val in zip(col_indices, a_block)])
+            
+            # Store (x, y, value) for B_matrix (只需要在当前行取值)
+            for j, col_idx in enumerate(col_indices):
+                B_array.append((row_idx, col_idx, b_block[j]))
+        
+        # Convert to numpy arrays and stack rows (x, y, value)
+        A_access_seq = np.array(A_array).T
+        B_access_seq = np.array(B_array).T
+                
+        # 返回COO格式的序列
+        return SparseRepresentFormat(A_access_seq, format="xyv_coo"), \
+                SparseRepresentFormat(B_access_seq, format="xyv_coo")
     
+    def intersection(self, A_matrix, B_matrix):
+        A_array = []
+        B_array = []
+
+        # 遍历 A 的每一行（CSR格式）
+        for row_idx in range(A_matrix.shape[0]):
+            a_row_start = A_matrix.indptr[row_idx]
+            a_row_end = A_matrix.indptr[row_idx + 1]
+            a_col_indices = A_matrix.indices[a_row_start:a_row_end]  # A矩阵的列索引（非零元素）
+
+            # 针对 A 的每一行，遍历 B 的每一列（CSC格式）
+            for col_idx in range(B_matrix.shape[1]):
+                b_col_start = B_matrix.indptr[col_idx]
+                b_col_end = B_matrix.indptr[col_idx + 1]
+                b_row_indices = B_matrix.indices[b_col_start:b_col_end]  # B矩阵的行索引（非零元素）
+
+                # 找到 A 的行的非零列和 B 的列的非零行的交集
+                common_indices = np.intersect1d(a_col_indices, b_row_indices, assume_unique=True)
+
+                if len(common_indices) > 0:
+                    # A 和 B 的交集对应的值
+                    a_values = A_matrix.data[a_row_start:a_row_end][np.isin(a_col_indices, common_indices)]
+                    b_values = B_matrix.data[b_col_start:b_col_end][np.isin(b_row_indices, common_indices)]
+
+                    # 存储 A_matrix 和 B_matrix 的 (x, y, value) 格式
+                    for idx, common_idx in enumerate(common_indices):
+                        # A_matrix 的 (row_idx, common_idx, a_values[idx])
+                        A_array.append((row_idx, common_idx, a_values[idx]))
+
+                        # B_matrix 的 (common_idx, col_idx, b_values[idx])
+                        B_array.append((common_idx, col_idx, b_values[idx]))
+
+        # 转换为 numpy 数组并堆叠行 (x, y, value)
+        A_access_seq = np.array(A_array).T
+        B_access_seq = np.array(B_array).T
+
+        return SparseRepresentFormat(A_access_seq, format="xyv_coo"), \
+                SparseRepresentFormat(B_access_seq, format="xyv_coo")
+
+
+
 if __name__ == '__main__':
-    # sparse_matrix = np.array([[
-    #     [1, 2, 3, 0, 1],  
-    #     [0, 0, 2, 0, 1],         
-    #     [0, 3, 9, 0, 0],     
-    #     [1, 0, 5, 0, 1]         
-    # ]])
-
-    sparse_matrix = np.array([
-        [5, 8, 10, 16],
-        [3, 10, 11, 16],
+    A = ([[5, 0, 7, 0],
+        [0, 9, 0, 10],
+        [6, 0, 0, 0],
         [0, 0, 0, 0],
-        [1, 10, 17, 18],
-        [7, 10, 15, 19],
-        [0, 0, 0, 0],
-    ]) 
+        [0, 0, 8, 0]
+    ])
+    A_sparse = SparseRepresentFormat(A, 'csr').sparse_matrix
+    A_sparse_csc = SparseRepresentFormat(A, 'csc').sparse_matrix
     
-    sparse_aligen = SparseAlign().col_dim_align(sparse_matrix, 6, 20)
-    print(sparse_aligen)
-    sparse_aligen = SparseAlign().row_dim_align(sparse_matrix, 6, 20)
-    print(sparse_aligen)
+    B = np.array([
+        [5, 6, 7, 8],
+        [9, 10, 11, 12],
+        [13, 14, 15, 16],
+        [17, 18, 19, 20],
+        [17, 18, 19, 20]
+    ]) # 密集矩阵
+
+
+    # 假设单边稀疏，使用indirection模式
+    reorder1 = SparseAlign(A_sparse, B, A_sparsity=True, B_sparsity=False, mode="indirection", return_seq="access")
+    # A_access_seq, B_access_seq= reorder1.a_seq, reorder1.b_seq
+    A_access_seq, B_access_seq = reorder1.indirection(A_sparse, B)
+    print("Indirection Mode:")
+    print("A_access_seq:\n", A_access_seq)
+    print("B_access_seq:\n", B_access_seq)
+    # print("A_value_seq:", A_value_seq)
+    # print("B_value_seq:", B_value_seq)
+    
+    # 假设双边稀疏，使用intersection模式
+    reorder2 = SparseAlign(A_sparse, A_sparse_csc, A_sparsity=True, B_sparsity=True, mode="intersection", return_seq="access")
+    # A_access_seq, B_access_seq= reorder2.a_seq, reorder2.b_seq
+    A_access_seq, B_access_seq = reorder1.intersection(A_sparse, A_sparse_csc)
+    print("\nIntersection Mode:")
+    print("A_access_seq:\n", A_access_seq)
+    print("B_access_seq:\n", B_access_seq)
+    # print("A_value_seq:", A_value_seq)
+    # print("B_value_seq:", B_value_seq)
+    
