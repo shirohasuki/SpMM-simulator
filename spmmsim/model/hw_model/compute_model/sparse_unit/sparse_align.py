@@ -122,11 +122,7 @@ if __name__ == '__main__':
     # 假设单边稀疏，使用indirection模式
     reorder1 = SparseAlign(A_sparse, B, A_sparsity=True, B_sparsity=False, mode="indirection", return_seq="access")
     # A_access_seq, B_access_seq = reorder1.a_seq, reorder1.b_seq
-    A_access_seq, B_access_seq = reorder1.indirection(A_sparse, B)
     print("Indirection Mode:")
-    print("A_access_seq:\n", A_access_seq)
-    print("B_access_seq:\n", B_access_seq)
-    # print("A_value_seq:", A_value_seq)
     # print("B_value_seq:", B_value_seq)
     
     # 假设双边稀疏，使用intersection模式
