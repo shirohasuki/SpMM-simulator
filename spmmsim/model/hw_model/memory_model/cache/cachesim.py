@@ -12,13 +12,14 @@ class DRAM:
 
 class CacheSim:
     def __init__(self):
-        self.way = 2
-        self.line_size  = 16 #byte
-        self.total_size = 8 #Kb     
-        self.addr_size = 32 #bit
-        self.dram      = []
-        self.hit_latency = 1
-        self.dram      = DRAM()
+        self.way          = 2
+        self.line_size    = 16 #byte
+        self.total_size   = 8 #Kb     
+        self.addr_size    = 32 #bit
+        self.dram         = []
+        self.hit_latency  = 1
+        self.miss_latency = 200
+        self.dram         = DRAM()
     def set_params(self, way, total_size,  line_size, 
                    replacement, addr_size, data_size):
         assert line_size % 2 == 0, "Cacheline size is unalign!"
