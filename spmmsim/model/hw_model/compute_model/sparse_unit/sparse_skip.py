@@ -5,43 +5,39 @@ from scipy.sparse import coo_matrix
 from format import SparseRepresentFormat
 
 class SparseSkip:
-    def __init__(self, ):
-        self.matrix_row = 0
-        self.matrix_col = 0
-        self.sparse_strategy = ["col_dim", "row_dim", "two_dim", "insert", "OoO"]
-	
-    # def col_dim_skip(self, sparse_matrix):
-    #     # 将稀疏矩阵转换为密集矩阵
-    #     dense_matrix = sparse_matrix.toarray()
+    def __init__(self, sparse_matrix, skip_strategy):
+        #
+        # 输入稀疏矩阵
+        # 输出skip后的toarray矩阵, 每个value修改输入矩阵中的绝对坐标
+        #
+        self.skip_func_map = {
+            "col_dim": self.col_dim_skip(sparse_matrix), 
+            "row_dim": self.row_dim_skip(sparse_matrix), 
+            "two_dim": self.two_dim_skip(sparse_matrix), 
+            "concat" : self.concat_skip(sparse_matrix), 
+            "OoO"    : self.OoO_skip(sparse_matrix)
+        } # map字典
 
-    #     # 去除全零列
-    #     non_zero_cols = ~np.all(dense_matrix == 0, axis=0)  # 找到非全零的列
-    #     col_skip_matrix = dense_matrix[:, non_zero_cols]    # 提取这些列
+        if skip_strategy not in self.skip_func_map:
+            raise ValueError(f"Unknown strategy: {skip_strategy}")
         
-    #     return col_skip_matrix
+        self.skip_func = self.skip_func_map[skip_strategy]
     
     def col_dim_skip(self, sparse_matrix):
         # 将稀疏矩阵转换为密集矩阵
         dense_matrix = sparse_matrix.toarray()
-
-        rows, cols = sparse_matrix.nonzero()  
-        new_dense_matrix = np.zeros(dense_matrix.shape, dtype=object)
-        # 将value换为(x,y)
-        for r, c in zip(rows, cols):
-            new_dense_matrix[r, c] = (r, c)
-
+        dense_matrix = self.replace_value_to_idx(dense_matrix)
         # 去除全零列
-        non_zero_cols = ~np.all(new_dense_matrix == 0, axis=0)  # 找到非全零的列
-        col_skip_matrix = new_dense_matrix[:, non_zero_cols]  # 提取这些列
+        non_zero_cols = ~np.all(dense_matrix == 0, axis=0)  # 找到非全零的列
+        col_skip_matrix = dense_matrix[:, non_zero_cols]  # 提取这些列
         
-        # print(col_skip_matrix)
         return col_skip_matrix
 
-    
     def row_dim_skip(self, sparse_matrix):
         # 将稀疏矩阵转换为密集矩阵
         dense_matrix = sparse_matrix.toarray()
-
+        dense_matrix = self.replace_value_to_idx(dense_matrix)
+        
         # 去除全零行
         non_zero_rows = ~np.all(dense_matrix == 0, axis=1)  # 找到非全零的行
         row_skip_matrix = dense_matrix[non_zero_rows, :]    # 提取这些行
@@ -51,7 +47,8 @@ class SparseSkip:
     def two_dim_skip(self, sparse_matrix):
         # 将稀疏矩阵转换为密集矩阵
         dense_matrix = sparse_matrix.toarray()
-
+        dense_matrix = self.replace_value_to_idx(dense_matrix)
+        
         # 去除全零行
         non_zero_rows = ~np.all(dense_matrix == 0, axis=1)  # 找到非全零的行
         dense_matrix = dense_matrix[non_zero_rows, :]        # 提取非全零行
@@ -63,6 +60,23 @@ class SparseSkip:
         return two_dim_skip_matrix
     
 
+    def concat_skip(self, sparse_matrix):
+  
+        return sparse_matrix
+    
+
+    def OoO_skip(self, sparse_matrix):
+  
+        return sparse_matrix
+    
+
+    # 将value换为(x,y)
+    def replace_value_to_idx(self, dense_matrix):
+        rows, cols = dense_matrix.nonzero()  
+        idx_matrix = np.zeros(dense_matrix.shape, dtype=object)
+        for r, c in zip(rows, cols):
+            idx_matrix[r, c] = (r, c)
+        return idx_matrix
 
     # # WS 得到 A 矩阵的访存
     # def sliding_window(self, gate_matrix_a, window_size=(16, 16)):
@@ -122,9 +136,9 @@ if __name__ == '__main__':
         [0, 0, 0, 0, 0],
     ]) 
     
-    sparse_aligen = SparseSkip().col_dim_skip(coo_matrix(sparse_matrix))
+    sparse_aligen = SparseSkip(coo_matrix(sparse_matrix), skip_strategy="col_dim").skip_func
     print(sparse_aligen)
-    sparse_aligen = SparseSkip().row_dim_skip(coo_matrix(sparse_matrix))
+    sparse_aligen = SparseSkip(coo_matrix(sparse_matrix), skip_strategy="row_dim").skip_func
     print(sparse_aligen)
-    sparse_aligen = SparseSkip().two_dim_skip(coo_matrix(sparse_matrix))
+    sparse_aligen = SparseSkip(coo_matrix(sparse_matrix), skip_strategy="two_dim").skip_func
     print(sparse_aligen)

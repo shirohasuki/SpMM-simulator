@@ -1,139 +1,97 @@
-# from format import SparseRepresentFormat
-# from spmmsim.model.hw_model.compute_model.sparse_unit.sparse_align import SparseReorder
-# from sparse_addr_convert import SparseAddrConvert
-# from spmmsim.model.hw_model.compute_model.sparse_unit.sparse_skip import SparseAlign
+from format import SparseRepresentFormat
+from sparse_align import SparseAlign
+from sparse_addr_convert import SparseAddrConvert
+from sparse_skip import SparseSkip
+from sparse_tile import SparseTile
 
 
-# from utils.sparse_matrix import SparseMatrix
+from utils.sparse_matrix import SparseMatrix
+from scipy.sparse import coo_matrix
 
-# import numpy as np
+import numpy as np
 
 
-# class SparseUnit: 
-#     def __init__(self, ):
-#         self.a = 0
+class SparseUnit: 
+    def __init__(self, ):
+        self.a = 0
     
 
-    # 左右左移动计算块(加载A行B列)
-    # 原则，软件上永远密集矩阵操作，直到输出
-    # def one_dim_skip(self, sparse_matrix_a, dense_matrix_b, systolic_row, systolic_col):
+ 
+    def sparse_access(self, sparse_matrix_a, matrix_b, one_side_sparsity, 
+            align_strategy, skip_strategy, tile_strategy,
+            systolic_size=(16, 16)):
 
-    #     A_skip_access_message_matrix=[]
-    #     B_skip_access_message_matrix=[]
+        A_access_msg = []
+        B_access_msg = []
 
+        # =============================================================================        
+        # align: 稀疏对齐，获得初始访存矩阵
+        # 输入原始矩阵(numpy)
+        align = SparseAlign(sparse_matrix_a, matrix_b, A_sparsity=True, \
+                                 B_sparsity=~one_side_sparsity, mode=align_strategy)
         
-    #     return A_skip_access_message_matrix, B_skip_access_message_matrix, \
-    #             A_buffer_matrix, B_buffer_matrix 
-        # matrix_row, matrix_col = sparse_matrix_a.shape
-
-        # # reorder: 得到哪些a和b参与运算
-        # reorder = SparseReorder(sparse_matrix_a, dense_matrix_b, A_sparsity=True, 
-        #                          B_sparsity=False, mode="indirection", return_seq="access")
-        # A_access_seq, B_access_seq = reorder.a_seq, reorder.b_seq
-        # # for i in range(len(A_access_seq[0])):
-        # #     print(A_access_seq[0][i], end='')        
-
-        # with open ("./A_access_seq.txt", "w") as f:
-        #     for line in A_access_seq:
-        #         f.write("[ " +", ".join(map(str, line)) + "]\n")
-                
-        # with open ("./B_access_seq.txt", "w") as f:
-        #     for line in B_access_seq:
-        #         f.write("[ " +", ".join(map(str, line)) + "]\n")
-        # # ============================================================================
-        # # 将稀疏矩阵转换为密集矩阵(处理矩阵)以便操作        
-        # A_process_matrix = np.full([len(B_access_seq), 
-        #                             len(max(B_access_seq, key = lambda x: len(x)))], fill_value=-1)
-        # for i, j in enumerate(B_access_seq):
-        #     A_process_matrix[i][0:len(j)] = j
+        a_align_access, b_align_access = align.a_seq, align.b_seq
+        # 返回COO格式的序列
         
-        # # =============================================================================        
-        # # align: 稀疏对齐，通过skip让计算更紧凑
-        # tiled_matmul_a = []
-        # align = SparseAlign()
-        # # print(A_access_seq.type())
-        # for i in range(0, len(A_process_matrix), 16):
-        #     aligned_block = align.col_dim_align(A_process_matrix[i:i+16], 16, 2048) # 对齐
-        #     # print(aligned_block)
-        #     aligned_tiled = align.sliding_window(aligned_block, window_size=(16, 16))
-        #     # 设置步长为 16，即每 16 步滑动一次
-        #     aligned_tiled = aligned_tiled[::16, ::16]
-        #     tiled_matmul_a.append(aligned_tiled) # 滑窗
-        
+        # with open("./a_align_access.txt", "w") as f:
+        #     for r, c, v in zip(a_align_access.row, a_align_access.col, a_align_access.data):
+        #         f.write(f"{r} {c} {v}\n")
+        # with open("./b_align_access.txt", "w") as f:
+        #     for r, c, v in zip(b_align_access.row, b_align_access.col, b_align_access.data):
+        #         f.write(f"{r} {c} {v}\n")
+        # =============================================================================        
+        # skip: 通过skip让计算与访存更紧凑
+        systolic_row, systolic_col = systolic_size
+        a_align_access_toarray = a_align_access.toarray()
+        a_skip_matrix = np.zeros((a_align_access_toarray.shape), dtype=object)
+        for i in range(0, a_align_access_toarray.shape[0], systolic_row):
+            skip_block = SparseSkip( \
+                coo_matrix(a_align_access_toarray[i:i+systolic_row]), skip_strategy=skip_strategy).skip_func
+            if skip_block.shape[1] < 2048: # 如果当前列数小于 2048，则在右侧用 -1 填充到 2048 列
+                skip_block = np.pad(skip_block, ((0, 0), (0, 2048 - skip_block.shape[1])), constant_values=-1)
+            a_skip_matrix[i:i+systolic_row] = skip_block
+
+        # =============================================================================        
+        # tile: 不同平铺策略得到最终访存pattern
+        # 输入 skip_matrix
+        # 输出 PE_list[block_row/col_id, PE_id, PE_tile(COO格式/np.array格式)]
+        PE_tile_array_coo = SparseTile(a_skip_matrix, tile_strategy="horizontal", systolic_size=systolic_size, coo_output=True).tile_func
+        PE_tile_array_np = SparseTile(a_skip_matrix, tile_strategy="horizontal", systolic_size=systolic_size, coo_output=False).tile_func
+
         # np.set_printoptions(threshold=np.inf)
-        # with open ("./tiled_matmul_a.txt", "w") as f:
-        #     for line in tiled_matmul_a:
-        #         line_str = np.array2string(line, separator=', ', max_line_width=np.inf)
-        #         f.write(line_str + "\n")  # 将每一行写入文件，手动换行
+        # with open("./PE_tiles.txt", "w") as f:
+        #     for block_row_id, pe_id, tile in PE_tile:
+        #         tile_str = np.array2string(tile, separator=', ', max_line_width=np.inf)
+        #         f.write(f"block_row_id: {block_row_id} PE_id: {pe_id}" + "\n" + tile_str + "\n\n")  # 加一个换行来分隔不同的 tiles
         # np.set_printoptions(threshold=1000)
-        
-        # # ============================================================================= 
-        # # 生成对齐后以计算tile为单元的访存序列        
-        # A_access_seq_tiled, B_access_seq_tiled = align.aligned_access(tiled_matmul_a, B_access_seq)
-        # # print(B_access_seq)
-        # # ============================================================================= 
-        # # generate skip access message matrix
-        # A_skip_access_message_matrix=[]
-        # B_skip_access_message_matrix=[]
-        # skip_access_matrix=[]
-        # # import pdb
+        # ====================================================================
+        # 地址格式转换，输出最终访存序列
+        # 得到 B 访存序列
+        B_access_msg = SparseAddrConvert(storage_strategy="dense", PE_tile_array=PE_tile_array_coo, \
+            vector_addr=True, vector_len=0, log_file="./B_access_msg.txt").vaddr_msg
 
-        # # for (row_block_id, PE_id, tile_a) in A_access_seq_tiled:
-        # #     print(A_access_seq[row_block_id*16:(row_block_id+1)*16], tile_a)
-            
-        # #     updated_matrix1, popped_elements = \
-        # #         SparseAddrConvert(sparse_matrix_a.shape[0], sparse_matrix_a.shape[1]).addr_convert_deque( \
-        # #         A_access_seq[row_block_id*16:(row_block_id+1)*16], tile_a)
-            
-        # #     skip_access_matrix.append(popped_elements)
-        
-        # # SparseAddrConvert(sparse_matrix_a.shape[0], sparse_matrix_a.shape[1]).skip_message(\
-        # #         self, skip_access_matrix, vector_addr=False, vector_size=0)
-
-        # # pdb.set_trace()
-
-        # # B_access_seq[0] PE_id [1] tile_b
-        # # 提取每个元组的第二个元素(tile_b)组成新列表
-        # tile_b_list = [item[1] for item in B_access_seq_tiled]
-        # # print(tile_b_list)
-        # B_skip_access_message_matrix.append(SparseAddrConvert(dense_matrix_b.shape[0], 
-        #         dense_matrix_b.shape[1]).gate_to_skip_message(tile_b_list, vector_addr=True, vector_size=16))
-        # B_skip_access_message_matrix
-
-        # with open ("./A_skip_access_message_matrix.txt", "w") as f:
-        #     for line in A_skip_access_message_matrix:
-        #         # line_str = np.array2string(line[1], separator=', ', max_line_width=np.inf)
-        #         f.write(str(line) + "\n")
-                
-        #         # import pdb
-        # with open ("./B_skip_access_message_matrix.txt", "w") as f:
-        #     for line in B_skip_access_message_matrix[0]:
-        #         # pdb.set_trace()
-        #         # print(line[1].tolist())
-        #         # line_str = np.array2string(line[1], separator=', ', max_line_width=np.inf)
-        #         f.write("(" + str(line[0]) + ", " + str(line[1].tolist()) + ", " + str(line[2]) + ")" + "\n")
-        
-
-        # A_buffer_matrix = []
-        # B_buffer_matrix = []
-        # return A_skip_access_message_matrix, B_skip_access_message_matrix, \
-        #         A_buffer_matrix, B_buffer_matrix
-    
-
-    # def two_dim_skip(self, sparse_matrix_a, sparse_matrix_b):
-        
-    #     return 
-    
-# if __name__ == '__main__':
-#     A_sparse = SparseMatrix(2048, 2048, 1/16).matrix
-#     # for i in A_sparse[0]:
-#         # print(A_sparse[0][i], end='')
-#     csr_A_sparse = SparseRepresentFormat(A_sparse, 'csr').sparse_matrix
-#     # print(csr_A_sparse.sparse_matrix)
-#     B_dense = np.random.randint(0, 10, size=(128, 2048))
-    
-#     A_mem_memssage, B_mem_memssage, A_buffer_matrix, B_buffer_matrix = SparseUnit().one_dim_skip(sparse_matrix_a=csr_A_sparse, 
-#         dense_matrix_b=B_dense, systolic_row=16, systolic_col=16)
-    
+        # 得到 A 访存序列
+        A_access_msg = SparseAddrConvert(storage_strategy="sparse", PE_tile_array=PE_tile_array_np, \
+            vector_addr=False, vector_len=0, log_file="./A_access_msg.txt").vaddr_msg
     
         
+
+        return A_access_msg, B_access_msg
+    
+    def padding():
+        return 
+        
+        
+    
+
+    
+if __name__ == '__main__':
+    A_sparse = SparseMatrix(2048, 2048, 1/16).matrix
+    csr_A_sparse = SparseRepresentFormat(A_sparse, 'csr').sparse_matrix
+    B_dense = np.random.randint(0, 10, size=(128, 2048))
+    
+    A_access_msg, B_access_msg= SparseUnit().sparse_access(sparse_matrix_a=csr_A_sparse, 
+        matrix_b=B_dense, one_side_sparsity=True, \
+        align_strategy="indirection", skip_strategy="col_dim", tile_strategy="horizontal_tile", \
+        systolic_size=(16, 16))
+
