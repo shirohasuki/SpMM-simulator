@@ -44,7 +44,7 @@ python task_profile.py
 ```
 
 ## Output
-The simulator provides:
+This profile tool provides:
 1. Console output with key path, total execution time, and total stall time.
 2. A pandas DataFrame with detailed information for each task.
 3. A matplotlib visualization of the pipeline execution.
