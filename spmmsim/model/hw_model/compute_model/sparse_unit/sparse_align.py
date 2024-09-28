@@ -1,5 +1,5 @@
 import numpy as np
-from format import SparseRepresentFormat
+from sparse_format import SparseRepresentFormat
 from scipy.sparse import coo_matrix
 
 class SparseAlign:

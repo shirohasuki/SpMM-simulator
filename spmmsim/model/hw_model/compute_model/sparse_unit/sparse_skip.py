@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from numpy.lib.stride_tricks import sliding_window_view
 from scipy.sparse import coo_matrix
-from format import SparseRepresentFormat
+from sparse_format import SparseRepresentFormat
 
 class SparseSkip:
     def __init__(self, sparse_matrix, skip_strategy):
