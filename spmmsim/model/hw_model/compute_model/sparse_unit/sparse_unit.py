@@ -68,11 +68,11 @@ class SparseUnit:
         # 地址格式转换，输出最终访存序列
         # 得到 B 访存序列
         B_access_msg = SparseAddrConvert(storage_strategy="dense", PE_tile_array=PE_tile_array_coo, \
-            vector_addr=True, vector_len=0, log_file="./B_access_msg.txt").vaddr_msg
+            vector_addr=True, vector_len=0, log_file="./output/B_access_msg.txt").vaddr_msg
 
         # 得到 A 访存序列
         A_access_msg = SparseAddrConvert(storage_strategy="sparse", PE_tile_array=PE_tile_array_np, \
-            vector_addr=False, vector_len=0, log_file="./A_access_msg.txt").vaddr_msg
+            vector_addr=False, vector_len=0, log_file="./output/A_access_msg.txt").vaddr_msg
     
         
 
