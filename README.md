@@ -1,5 +1,13 @@
 # SpMM-simulator
 
+### Features
+- Models we have
+  - A cache simulator ``
+  - A systolic_array model
+  - A sparse compute model
+- Tools we have
+  - task profiler
+  - custom inst decoder
 
 ### Run the source code
 1. Set the PYTHONPATH environment variable. 
