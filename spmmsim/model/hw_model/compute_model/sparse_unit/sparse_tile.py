@@ -12,10 +12,7 @@ import numpy as np
 
 class SparseTile: 
     def __init__(self, dense_matrix, tile_strategy, systolic_size, coo_output):
-        # self.dense_matrix   = dense_matrix
-        # self.tile_strategy  = tile_strategy
-        # self.systolic_size  = systolic_size
-        # self.coo_output     = coo_output
+        # 对于vector unit而言, systolic_size = (vector有多少个乘法器x有多少个vector单元, 1)
         
         self.tile_func_map = {
             "horizontal": self.horizontal_tile(dense_matrix, systolic_size, coo_output), 
@@ -62,32 +59,7 @@ class SparseTile:
                 PE_tile_output.append((block_row_id, pe_id, tile))
 
         return PE_tile_output
-    
-    # 左右左移动计算块(A跳跃, B连续)
-    # def horizontal_tile(self, dense_matrix, systol_size):
-    #     block_row_id = 0
-    #     PE_id = 0
-    #     PE_tile = [] 
-    #     (systolic_row, systolic_col) = systol_size
-    #     for i in range(0, dense_matrix.shape[0], systolic_row):
-    #         a_tiles = self.sliding_window(dense_matrix[i:i+systolic_row], window_size=systol_size)
-    #         a_tiles = a_tiles[::systolic_col, ::systolic_col] # 一行的PEs
-    #         for j in range(a_tiles.shape[1]):
-    #             if np.all(a_tiles[0][j] == -1):
-    #                 break
-    #             else:
-    #                 PE_tile.append((block_row_id, PE_id, a_tiles[0][j]))
-    #                 PE_id += 1  
-    #         block_row_id += 1
-
-    #     PE_tile_coo = []
-    #     for block_row_id, pe_id, tile in PE_tile:
-    #         tile_coo = coo_matrix(tile)
-    #         # 将 (block_row_id, pe_id, tile_coo) 存入 PE_tile_coo 列表
-    #         PE_tile_coo.append((block_row_id, pe_id, tile_coo))
         
-    #     return PE_tile_coo
-    
     # 下上下移动计算块(A连续, B跳跃)
     def vertical_tile(self, dense_matrix, systol_size, coo_output):
         (systolic_row, systolic_col) = systol_size

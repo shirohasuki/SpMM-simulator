@@ -49,17 +49,6 @@ class SparseAddrConvert:
             access_msg.append((block_row_id, PE_ID, cols))  # 返回元组
             PE_ID += 1
         return access_msg
-        # np.set_printoptions(threshold=np.inf)
-        # with open("./B_mem_access.txt", "w") as f:
-        #     for block_row_id, pe_id, tile_coo in PE_tile_array:
-        #         f.write(f"[block_row_id: {block_row_id}, PE_id: {pe_id}], vector_addr: {vector_addr}, vector_len: {vector_len}")
-        #         for row, col, value in zip(tile_coo.row, tile_coo.col, tile_coo.data):
-        #             if value == -1: 
-        #                 continue
-        #             (row_i, col_i) = value
-        #             f.write(str(col_i) + ", ")     
-        #         f.write(" \n")     
-        # np.set_printoptions(threshold=1000)
 
     def sparse_storage_addr(self, PE_tile_array, vector_addr=False, vector_len=0):
         # print("in sparse")
@@ -80,11 +69,7 @@ class SparseAddrConvert:
                         if tile[i][j] not in (0, -1):  # 检查非零且非-1
                             # print("here")
                             encoded_values.append((block_row_id, pe_id, i, j, global_counter))
-                            # encoded_values.append((block_row_id, pe_id, str(global_counter)))
                             global_counter += 1  
-                    # if pe_id_in_row == len(block_row_pes) - 1:
-                    #     pe_id += pe_id_in_row 
-                    # pe_id += 1
 
         block_row_pe_dict = {}
         for block_row_id, pe_id, row, col, access in encoded_values:
@@ -99,51 +84,12 @@ class SparseAddrConvert:
             # f.write(f"[block_row_id: {block_row_id}, PE_id: {PE_ID}], " +  ", ".join(access) + "\n")
             access_msg.append((block_row_id, PE_ID, access))
             PE_ID += 1
-   
-        # access_msg = []
-        # pe_id = 0
-        # access = []  # 用于收集访问代码
-
-        # for block_row_id, pe, _, _, code in encoded_values:
-        #     for i in range(block_row_id): 
-        #         for j in range(pe):
-        #             access.append(code)
-        #             pe_id +=1
-        #         access_msg.append((block_row_id, pe_id, str(access)))  # 保存访问信息
-
-        # print(encoded_values)
-        # access_msg = []
-        # pe_id = 0  # 初始化 pe_id
-
-        # # 遍历每个 block_row_id
-        # for block_row_id, _, _, _, code in encoded_values:
-        #     if block_row_id >= len(access_msg):
-        #         access_msg.append((block_row_id, pe_id, []))  # 添加新的行
-
-        #     # 获取当前行的访问记录
-        #     access_msg[block_row_id][2].append(code)  # 添加当前代码到对应的行
-
-        #     pe_id += 1  # 累加 pe_id
-
-        # # 最后将访问代码列表转换为字符串
-        # for idx in range(len(access_msg)):
-        #     access_msg[idx] = (access_msg[idx][0], access_msg[idx][1], str(access_msg[idx][2]))
-        
-
-        # np.set_printoptions(threshold=np.inf)
-        # with open("log_file", "w") as f:
-        #     for block_row_id, pe_id in access_msg:
-        #         line = f"[block_row_id: {block_row_id}, PE_id: {pe_id}], [vector_addr: {vector_addr}, vector_len: {vector_len}]"
-        #         # line += ", ".join(map(str, addrs)) + "]"
-                
-        #         f.write(line + ", ")     
-        # np.set_printoptions(threshold=1000)
             
         return access_msg
     
     
 
-    # =============== 下面是 version1 的屎山代码, 弃用 ========================
+    # =============== 下面是 version1 的屎山代码, 弃用 (包括下面的测试用例，都是屎) ========================
     def gate_to_skip(self, gate_access_matrix):
         skip_row_access_matrix = []
 

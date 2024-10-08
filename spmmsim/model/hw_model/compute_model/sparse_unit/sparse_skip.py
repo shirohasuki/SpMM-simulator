@@ -66,55 +66,39 @@ class SparseSkip:
     
 
     def OoO_skip(self, sparse_matrix):
-  
-        return sparse_matrix
+        # 目前这种skip只是for interaction
+        # 将 coo_matrix 转换为稠密矩阵
+        dense_matrix = sparse_matrix.toarray()
+        dense_matrix = self.replace_value_to_idx(dense_matrix)
+        
+        # 获取矩阵的原始大小
+        rows, cols = dense_matrix.shape
+        
+        # 创建一个与原始矩阵大小相同的全为 -1 的矩阵
+        OoO_skip_matrix = np.full((rows, cols), -1, dtype=object)
+        
+        # 用于记录非零行被填充到哪一行了
+        row_idx = 0
+        
+        # 遍历原稀疏矩阵，按行紧凑填充非零元素，跳过全零行
+        for i in range(rows):
+            non_zero_elements = [x for x in dense_matrix[i] if x != 0]  # 获取当前行的非零元素
+            if non_zero_elements:  # 如果当前行有非零元素
+                # 将非零元素紧凑地填入 padded_matrix 的当前行
+                OoO_skip_matrix[row_idx, :len(non_zero_elements)] = non_zero_elements
+                row_idx += 1  # 更新填充行索引，跳到下一行
+        
+        return OoO_skip_matrix
+    
     
 
-    # 将value换为(x,y)
+    # 将非0数value换为(x,y)
     def replace_value_to_idx(self, dense_matrix):
         rows, cols = dense_matrix.nonzero()  
         idx_matrix = np.zeros(dense_matrix.shape, dtype=object)
         for r, c in zip(rows, cols):
             idx_matrix[r, c] = (r, c)
         return idx_matrix
-
-    # # WS 得到 A 矩阵的访存
-    # def sliding_window(self, gate_matrix_a, window_size=(16, 16)):
-    #     # 获取矩阵的行列数
-    #     # print(gate_matrix_a)
-    #     rows, cols = gate_matrix_a.shape
-
-    #     # 计算需要填充的行和列，使得矩阵维度可以被16x16整除
-    #     row_padding = (window_size[0] - rows % window_size[0]) % window_size[0]
-    #     col_padding = (window_size[1] - cols % window_size[1]) % window_size[1]
-
-    #     # 使用np.pad填充矩阵，填充为-1, 得到可以整除的矩阵
-    #     padded_matrix = np.pad(gate_matrix_a, 
-    #                         ((0, row_padding), (0, col_padding)), 
-    #                         mode='constant', constant_values=-1)
-
-    #     tiled_matmul = sliding_window_view(padded_matrix, window_shape=window_size)
-    #     return tiled_matmul
-    
-    # def aligned_access(self, tiled_matmul_a, gate_matrix_b):
-    #     A_access_seq = []
-    #     B_access_seq = []
-    #     row_block_id = 0
-    #     PE_id = 0
-    #     for row_block in range(len(tiled_matmul_a)):
-    #         row_block_id += 1
-    #         for PE_block in range(len(tiled_matmul_a[row_block])):
-    #             for PE in range(len(tiled_matmul_a[row_block][PE_block])):
-    #                 tiled_A = tiled_matmul_a[row_block][PE_block][PE]
-    #                 # 获取tiled_A每列的第一个非零元素
-    #                 tiled_B = tiled_A[np.argmax(tiled_A != 0, axis=0), np.arange(tiled_A.shape[1])]
-    #                 # 对于全零列，将其设为 0
-    #                 tiled_B[np.all(tiled_A == 0, axis=0)] = 0
-    #                 A_access_seq.append((row_block_id, PE_id, tiled_A))
-    #                 B_access_seq.append((row_block_id, PE_id, tiled_B))
-    #                 PE_id += 1
-                             
-    #     return A_access_seq, B_access_seq
 
 
         
@@ -128,17 +112,19 @@ if __name__ == '__main__':
     # ]])
 
     sparse_matrix = np.array([
-        [5, 8, 10,  0, 16],
-        [3, 10, 11, 0, 16],
+        [5, 0, 10,  0, 0],
+        [3, 10, 11, 0, 17],
         [0, 0, 0, 0, 0],
-        [1, 10, 17, 0, 18],
-        [7, 10, 15, 0, 19],
+        [1, 0, 17, 0, 18],
+        [7, 10, 0, 0, 19],
         [0, 0, 0, 0, 0],
     ]) 
     
-    sparse_aligen = SparseSkip(coo_matrix(sparse_matrix), skip_strategy="col_dim").skip_func
-    print(sparse_aligen)
-    sparse_aligen = SparseSkip(coo_matrix(sparse_matrix), skip_strategy="row_dim").skip_func
-    print(sparse_aligen)
-    sparse_aligen = SparseSkip(coo_matrix(sparse_matrix), skip_strategy="two_dim").skip_func
-    print(sparse_aligen)
+    sparse_align = SparseSkip(coo_matrix(sparse_matrix), skip_strategy="col_dim").skip_func
+    print(f"col_dim_skip\n{sparse_align}")
+    sparse_align = SparseSkip(coo_matrix(sparse_matrix), skip_strategy="row_dim").skip_func
+    print(f"row_dim_skip\n{sparse_align}")
+    sparse_align = SparseSkip(coo_matrix(sparse_matrix), skip_strategy="two_dim").skip_func
+    print(f"two_dim_skip\n{sparse_align}")
+    sparse_align = SparseSkip(coo_matrix(sparse_matrix), skip_strategy="OoO").skip_func
+    print(f"OoO_skip\n{sparse_align}")

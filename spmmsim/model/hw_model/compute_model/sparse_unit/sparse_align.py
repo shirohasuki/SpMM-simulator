@@ -62,7 +62,7 @@ class SparseAlign:
     def intersection(self, A_matrix, B_matrix):
         A_array = []
         B_array = []
-
+        # print("here")
         # 遍历 A 的每一行（CSR格式）
         for row_idx in range(A_matrix.shape[0]):
             a_row_start = A_matrix.indptr[row_idx]
@@ -121,9 +121,10 @@ if __name__ == '__main__':
 
     # 假设单边稀疏，使用indirection模式
     reorder1 = SparseAlign(A_sparse, B, A_sparsity=True, B_sparsity=False, mode="indirection", return_seq="access")
-    # A_access_seq, B_access_seq = reorder1.a_seq, reorder1.b_seq
+    A_access_seq, B_access_seq = reorder1.a_seq, reorder1.b_seq
     print("Indirection Mode:")
-    # print("B_value_seq:", B_value_seq)
+    print("A_access_seq:\n", A_access_seq)
+    print("B_access_seq:\n", B_access_seq)
     
     # 假设双边稀疏，使用intersection模式
     reorder2 = SparseAlign(A_sparse, A_sparse_csc, A_sparsity=True, B_sparsity=True, mode="intersection", return_seq="access")
