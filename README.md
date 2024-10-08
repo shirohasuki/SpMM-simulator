@@ -19,7 +19,7 @@ $ export PYTHONPATH=$PWD:${PYTHONPATH}
 
 ### TODO
 1. - [ ] Tools: 
-   1. - [ ] 解析gemmini, 添加要供给Profile的latency
+   1. - [x] 解析gemmini, 添加要供给Profile的latency
    2. - [ ] 解析gemmini, 确定task_profile需要的并行串行关系
 2. - [ ] Modeling:
    1. - [ ] NVR: 添加NVR实现 
