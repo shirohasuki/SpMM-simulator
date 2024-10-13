@@ -8,10 +8,10 @@ from utils.ewma_loop_bound_detector import EWMALoopBoundDetectorGroup as LBD
 
 
 class DVR:
-    def __init__(self):
+    def __init__(self, vector_size, ewma_alpha=0.3, initial_bound=2):
         self.coeff = 4 # 假设每个元素 4 字节
         self.stride_prefetcher = StridePrefetcher()  # 使用步长预取器
-        self.loop_bound_group = LBD(num_detectors=4, alpha=0.3, initial_bound=2)  # 基于EWMA 的循环边界检测器
+        self.loop_bound_group = LBD(num_detectors=vector_size, alpha=ewma_alpha, initial_bound=initial_bound)  # 基于EWMA 的循环边界检测器
     
     def stride_detector(self, curr_i):
         """步长检测器：使用传入的 StridePrefetcher 来预测下一个i值"""
@@ -42,7 +42,7 @@ class DVR:
             # for row in range(detector_id):
                 # print(predicted_bounds[row])
                 # print(predicted_bounds)
-                print(f"第{detector_id}行起始地址{ptr_vector[detector_id]}, 预测边界{round(bound)}")
+                # print(f"第{detector_id}行起始地址{ptr_vector[detector_id]}, 预测边界{round(bound)}")
                 for col in range(round(bound)):
                     predicted_addr = self.addr_generator(ptr_vector[detector_id], col)
                     results.append((detector_id, predicted_addr))
@@ -63,7 +63,7 @@ if __name__ == "__main__":
         [4, 8, 7, 5]
     ] 
 
-    dvr = DVR()
+    dvr = DVR(vector_size=4, ewma_alpha=0.3, initial_bound=2)
 
     for i in range(len(bound)):
         predict_addr = dvr.prefetch(bound[i], ptr_vector[i])

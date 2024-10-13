@@ -36,7 +36,7 @@ class StridePrefetcherGroup:
         # 创建指定数量的步长预取器，每个预取器初始步长为默认值
         self.prefetchers = [StridePrefetcher(stride=default_stride) for _ in range(num_prefetchers)]
 
-    def execute_group(self, mvin_instructions):
+    def prefetch(self, mvin_instructions):
         """
         执行一组 mvin 指令，每个预取器处理一个。
         mvin_instructions: 每个元素是 rs1 ，表示 mvin 指令
