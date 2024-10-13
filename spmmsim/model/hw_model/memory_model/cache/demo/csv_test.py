@@ -14,7 +14,7 @@ from cachesim import CacheSim
 if __name__ == '__main__':
 
 
-    df = pd.read_csv('B_mem_access_pattern.csv', delimiter=',')
+    df = pd.read_csv('A_mem_access_pattern.csv', delimiter=',')
 
     # 去掉前两列
     df = df.iloc[:, 2:]
@@ -58,34 +58,58 @@ if __name__ == '__main__':
     replacement     = str(config.get(section, 'Way of Replacement'))
     data_size       = int(config.get(section, 'Data Size'))
 
-    sim = CacheSim()
-    sim.set_params(way, size, cacheline_size, replacement, 32, data_size)
+    sim1 = CacheSim()
+    sim2 = CacheSim()
+    sim3 = CacheSim()
+    sim1.set_params(way, size, cacheline_size, replacement, 32, data_size)
+    sim2.set_params(way, size, cacheline_size, replacement, 32, data_size)
+    sim3.set_params(way, size, cacheline_size, replacement, 32, data_size)
     # for i in range(0, 100, 1):
     #     sim.cache_read(i, 0, 0, 0, verbosity=True)
     import pdb
     
+
+    
     print("int32: ")
-    for i in range(matrix.shape[1]):
-        for j in range(matrix.shape[0]):
-            if (matrix[j][i] != -1):
+    miss_times = 0
+    miss_iters = 0
+    for i in range(matrix.shape[0]):
+        for j in range(matrix.shape[1]):
+            if (matrix[i][j] != -1):
                 # print(f"addr={matrix[j][i]}")
-                sim.cache_read(matrix[j][i]*4, 0, 0, 0, verbosity=False)
+                sim1.cache_read(matrix[i][j]*4, 0, 0, 0, verbosity=False)
+        if sim1.sim.miss > miss_times:
+            miss_iters += 1
+            miss_times = sim1.sim.miss
         # sim.sim.print_info()
             # pdb.set_trace()
-    sim.sim.print_info()
+    print(f"miss_times={miss_times}, miss_iters={miss_iters}")
+    sim1.sim.print_info()
 
     print("FP16: ")
-    for i in range(matrix.shape[1]):
-        for j in range(matrix.shape[0]):
-            if (matrix[j][i] != -1):
+    miss_times = 0
+    miss_iters = 0
+    for i in range(matrix.shape[0]):
+        for j in range(matrix.shape[1]):
+            if (matrix[i][j] != -1):
                 # print(f"addr={matrix[j][i]}")
-                sim.cache_read(matrix[j][i]*2, 0, 0, 0, verbosity=False)
-    sim.sim.print_info()
+                sim2.cache_read(matrix[i][j]*2, 0, 0, 0, verbosity=False)
+        if sim2.sim.miss > miss_times:
+            miss_iters += 1
+            miss_times = sim2.sim.miss
+    print(f"miss_times={miss_times}, miss_iters={miss_iters}")
+    sim2.sim.print_info()
 
     print("int8: ")
-    for i in range(matrix.shape[1]):
-        for j in range(matrix.shape[0]):
-            if (matrix[j][i] != -1):
+    miss_times = 0
+    miss_iters = 0
+    for i in range(matrix.shape[0]):
+        for j in range(matrix.shape[1]):
+            if (matrix[i][j] != -1):
                 # print(f"addr={matrix[j][i]}")
-                sim.cache_read(matrix[j][i]*1, 0, 0, 0, verbosity=False)
-    sim.sim.print_info()
+                sim2.cache_read(matrix[i][j]*1, 0, 0, 0, verbosity=False)
+        if sim2.sim.miss > miss_times:
+            miss_iters += 1
+            miss_times = sim2.sim.miss
+    print(f"miss_times={miss_times}, miss_iters={miss_iters}")
+    sim2.sim.print_info()

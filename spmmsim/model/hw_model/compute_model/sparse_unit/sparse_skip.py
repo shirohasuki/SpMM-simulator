@@ -66,29 +66,30 @@ class SparseSkip:
     
 
     def OoO_skip(self, sparse_matrix):
+        return sparse_matrix
         # 目前这种skip只是for interaction
         # 将 coo_matrix 转换为稠密矩阵
-        dense_matrix = sparse_matrix.toarray()
-        dense_matrix = self.replace_value_to_idx(dense_matrix)
+        # dense_matrix = sparse_matrix.toarray()
+        # dense_matrix = self.replace_value_to_idx(dense_matrix)
         
-        # 获取矩阵的原始大小
-        rows, cols = dense_matrix.shape
+        # # 获取矩阵的原始大小
+        # rows, cols = dense_matrix.shape
         
-        # 创建一个与原始矩阵大小相同的全为 -1 的矩阵
-        OoO_skip_matrix = np.full((rows, cols), -1, dtype=object)
+        # # 创建一个与原始矩阵大小相同的全为 -1 的矩阵
+        # OoO_skip_matrix = np.full((rows, cols), -1, dtype=object)
         
-        # 用于记录非零行被填充到哪一行了
-        row_idx = 0
+        # # 用于记录非零行被填充到哪一行了
+        # row_idx = 0
         
-        # 遍历原稀疏矩阵，按行紧凑填充非零元素，跳过全零行
-        for i in range(rows):
-            non_zero_elements = [x for x in dense_matrix[i] if x != 0]  # 获取当前行的非零元素
-            if non_zero_elements:  # 如果当前行有非零元素
-                # 将非零元素紧凑地填入 padded_matrix 的当前行
-                OoO_skip_matrix[row_idx, :len(non_zero_elements)] = non_zero_elements
-                row_idx += 1  # 更新填充行索引，跳到下一行
+        # # 遍历原稀疏矩阵，按行紧凑填充非零元素，跳过全零行
+        # for i in range(rows):
+        #     non_zero_elements = [x for x in dense_matrix[i] if x != 0]  # 获取当前行的非零元素
+        #     if non_zero_elements:  # 如果当前行有非零元素
+        #         # 将非零元素紧凑地填入 padded_matrix 的当前行
+        #         OoO_skip_matrix[row_idx, :len(non_zero_elements)] = non_zero_elements
+        #         row_idx += 1  # 更新填充行索引，跳到下一行
         
-        return OoO_skip_matrix
+        # return OoO_skip_matrix
     
     
 

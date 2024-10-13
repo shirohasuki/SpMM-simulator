@@ -33,12 +33,12 @@ class SparseUnit:
         a_align_access, b_align_access = align.a_seq, align.b_seq
         # 返回COO格式的序列
         
-        # with open("./a_align_access.txt", "w") as f:
-        #     for r, c, v in zip(a_align_access.row, a_align_access.col, a_align_access.data):
-        #         f.write(f"{r} {c} {v}\n")
-        # with open("./b_align_access.txt", "w") as f:
-        #     for r, c, v in zip(b_align_access.row, b_align_access.col, b_align_access.data):
-        #         f.write(f"{r} {c} {v}\n")
+        with open("./a_align_access.txt", "w") as f:
+            for r, c, v in zip(a_align_access.row, a_align_access.col, a_align_access.data):
+                f.write(f"{r} {c} {v}\n")
+        with open("./b_align_access.txt", "w") as f:
+            for r, c, v in zip(b_align_access.row, b_align_access.col, b_align_access.data):
+                f.write(f"{r} {c} {v}\n")
         # =============================================================================        
         # skip: 通过skip让计算与访存更紧凑
         # padding 后面单独加个函数
@@ -59,17 +59,32 @@ class SparseUnit:
                     skip_block = np.pad(skip_block, ((0, 0), (0, 2048 - skip_block.shape[1])), constant_values=-1)
                 a_skip_matrix[i:i+systolic_row] = skip_block
         else:
-            a_skip_matrix = SparseSkip(a_align_access, skip_strategy=skip_strategy).skip_func
-            b_skip_matrix = SparseSkip(b_align_access, skip_strategy=skip_strategy).skip_func
+            for i in range(0, a_align_access_toarray.shape[1]):
+                skip_block = SparseSkip( \
+                    coo_matrix(a_align_access_toarray[:, i]), skip_strategy=skip_strategy).skip_func
+                if skip_block.shape[0] < 2048: # 如果当前行数小于 2048，则在下侧用 -1 填充到 2048 行
+                    skip_block = np.pad(skip_block, ((0, 0), (0, 2048 - skip_block.shape[0])), constant_values=-1)
+                a_skip_matrix[:, i] = skip_block
+
+            for i in range(0, b_align_access_toarray.shape[1]):
+                skip_block = SparseSkip( \
+                    coo_matrix(b_align_access_toarray[:, i]), skip_strategy=skip_strategy).skip_func
+                if skip_block.shape[0] < 2048: # 如果当前行数小于 2048，则在下侧用 -1 填充到 2048 行
+                    skip_block = np.pad(skip_block, ((0, 0), (0, 2048 - skip_block.shape[0])), constant_values=-1)
+                a_skip_matrix[:, i] = skip_block
+
+
+            # a_skip_matrix = SparseSkip(a_align_access, skip_strategy=skip_strategy).skip_func
+            # b_skip_matrix = SparseSkip(b_align_access, skip_strategy=skip_strategy).skip_func
         
-        # np.set_printoptions(threshold=np.inf)
-        # with open("./a_skip_matrix.txt", "w") as f:
-        #     for line in a_skip_matrix:
-        #         f.write(f"{line}\n")
-        # with open("./b_skip_matrix.txt", "w") as f:
-        #     for line in b_skip_matrix:
-        #         f.write(f"{line}\n")
-        # np.set_printoptions(threshold=1000)
+        np.set_printoptions(threshold=np.inf)
+        with open("./a_skip_matrix.txt", "w") as f:
+            for line in a_skip_matrix:
+                f.write(f"{line}\n")
+        with open("./b_skip_matrix.txt", "w") as f:
+            for line in b_skip_matrix:
+                f.write(f"{line}\n")
+        np.set_printoptions(threshold=1000)
         # =============================================================================        
         # tile: 不同平铺策略得到最终访存pattern
         # 输入 skip_matrix

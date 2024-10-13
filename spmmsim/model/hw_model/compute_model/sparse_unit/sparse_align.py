@@ -101,14 +101,22 @@ class SparseAlign:
 
 
 if __name__ == '__main__':
-    A = ([[5, 0, 7, 0],
+    A = ([
+        [5, 0, 7, 0],
         [0, 9, 0, 10],
         [6, 0, 0, 0],
         [0, 0, 0, 0],
         [0, 0, 8, 0]
     ])
+    A2 = np.array([
+        [7, 0, 0, 0],
+        [0, 0, 2, 0],
+        [0, 0, 0, 0],
+        [0, 9, 0, 0],
+        [0, 0, 0, 0]
+    ])
     A_sparse = SparseRepresentFormat(A, 'csr').sparse_matrix
-    A_sparse_csc = SparseRepresentFormat(A, 'csc').sparse_matrix
+    A_sparse_csc = SparseRepresentFormat(A2, 'csc').sparse_matrix
     
     B = np.array([
         [5, 6, 7, 8],

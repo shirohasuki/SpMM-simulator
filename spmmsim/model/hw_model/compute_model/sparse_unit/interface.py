@@ -61,9 +61,9 @@ if __name__ == '__main__':
     #                 systolic_size=(16, 16), A_vector_addr=False, B_vector_addr=True, \
     #                 A_log_file="./output/TEST1_A_access.txt", B_log_file="./output/TEST1_B_access.txt")
     
-    print("[TEST2][two-side-sparse, intersection, OoO_skip, vertical_tile, 1x64] \n")
+    print("[TEST2][two-side-sparse, intersection, OoO_skip, vertical_tile, 64x1] \n")
     A_access_msg, B_access_msg = sparse_mem_access_pattern(A_matrix=csr_A_sparse, 
                     B_matrix=csc_B_sparse, is_one_side_sparsity=False, \
-                    align_strategy="intersection", skip_strategy="OoO", tile_strategy="vertical", \
+                    align_strategy="intersection", skip_strategy="row_dim", tile_strategy="vertical", \
                     systolic_size=(64, 1), A_vector_addr=False, B_vector_addr=False, \
                     A_log_file="./output/TEST2_A_access.txt", B_log_file="./output/TEST2_B_access.txt")
