@@ -17,12 +17,10 @@ def sparse_mem_access_pattern(A_matrix, B_matrix, is_one_side_sparsity, \
         align_strategy=align_strategy, skip_strategy=skip_strategy, tile_strategy=tile_strategy, \
         systolic_size=systolic_size)
     
-    if ~is_one_side_sparsity:
-        B_storage_strategy = "sparse"
-        # B_PE_tile_array    = PE_tile_array_np
+    if is_one_side_sparsity:
+        B_storage_strategy = "dense"
     else:
-        B_storage_strategy = "dense"        
-        # B_PE_tile_array    = PE_tile_array_coo
+        B_storage_strategy = "sparse"        
         
     A_access_msg = SparseAddrConvert("sparse", \
             A_PE_tile_array, A_vector_addr, vector_len=0, log_file=A_log_file).vaddr_msg
@@ -54,16 +52,16 @@ if __name__ == '__main__':
 
 
 
-    # print("[TEST1][one-side-sparse, indirection, col_dim_skip, horizontal_tile, 16x16] \n")
-    # A_access_msg, B_access_msg = sparse_mem_access_pattern(A_matrix=csr_A_sparse, 
-    #                 B_matrix=B_dense, is_one_side_sparsity=True, \
-    #                 align_strategy="indirection", skip_strategy="col_dim", tile_strategy="horizontal", \
-    #                 systolic_size=(16, 16), A_vector_addr=False, B_vector_addr=True, \
-    #                 A_log_file="./output/TEST1_A_access.txt", B_log_file="./output/TEST1_B_access.txt")
-    
-    print("[TEST2][two-side-sparse, intersection, OoO_skip, vertical_tile, 64x1] \n")
+    print("[TEST1][one-side-sparse, indirection, col_dim_skip, horizontal_tile, 16x16] \n")
     A_access_msg, B_access_msg = sparse_mem_access_pattern(A_matrix=csr_A_sparse, 
-                    B_matrix=csc_B_sparse, is_one_side_sparsity=False, \
-                    align_strategy="intersection", skip_strategy="row_dim", tile_strategy="vertical", \
-                    systolic_size=(64, 1), A_vector_addr=False, B_vector_addr=False, \
-                    A_log_file="./output/TEST2_A_access.txt", B_log_file="./output/TEST2_B_access.txt")
+                    B_matrix=B_dense, is_one_side_sparsity=True, \
+                    align_strategy="indirection", skip_strategy="col_dim", tile_strategy="horizontal", \
+                    systolic_size=(16, 16), A_vector_addr=False, B_vector_addr=True, \
+                    A_log_file="./output/TEST1_A_access.txt", B_log_file="./output/TEST1_B_access.txt")
+    
+    # print("[TEST2][two-side-sparse, intersection, OoO_skip, vertical_tile, 64x1] \n")
+    # A_access_msg, B_access_msg = sparse_mem_access_pattern(A_matrix=csr_A_sparse, 
+    #                 B_matrix=csc_B_sparse, is_one_side_sparsity=False, \
+    #                 align_strategy="intersection", skip_strategy="row_dim", tile_strategy="vertical", \
+    #                 systolic_size=(64, 1), A_vector_addr=False, B_vector_addr=False, \
+    #                 A_log_file="./output/TEST2_A_access.txt", B_log_file="./output/TEST2_B_access.txt")

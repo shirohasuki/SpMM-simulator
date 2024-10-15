@@ -3,7 +3,7 @@ sys.path.append("../")
 # import math 
 
 
-from SP.stride_prefetch import StridePrefetcher
+from ..SP.stride_prefetch import StridePrefetcher
 
 
 class NVR:
@@ -37,10 +37,11 @@ class NVR:
         results = []
         # 对每个PE内处理
         for i in range(len(ss_start)):
-            for col in range(ss_end[i], ss_start[i]):
-                # for predicted_addr in col:
-                    # predicted_addr = self.addr_generator(ptr_vector[detector_id], col)
-                    results.append((i, col))
+            if (ss_end[i] != 0) and  (ss_start[i] != 0):
+                for col in range(ss_end[i], ss_start[i]+1):
+                    # for predicted_addr in col:
+                        # predicted_addr = self.addr_generator(ptr_vector[detector_id], col)
+                        results.append((i, col))
                     # PE第几行的CSR第几个数
                 
         return results

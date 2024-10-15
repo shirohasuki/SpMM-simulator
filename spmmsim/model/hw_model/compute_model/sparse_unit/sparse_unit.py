@@ -33,12 +33,12 @@ class SparseUnit:
         a_align_access, b_align_access = align.a_seq, align.b_seq
         # 返回COO格式的序列
         
-        with open("./a_align_access.txt", "w") as f:
-            for r, c, v in zip(a_align_access.row, a_align_access.col, a_align_access.data):
-                f.write(f"{r} {c} {v}\n")
-        with open("./b_align_access.txt", "w") as f:
-            for r, c, v in zip(b_align_access.row, b_align_access.col, b_align_access.data):
-                f.write(f"{r} {c} {v}\n")
+        # with open("./a_align_access.txt", "w") as f:
+        #     for r, c, v in zip(a_align_access.row, a_align_access.col, a_align_access.data):
+        #         f.write(f"{r} {c} {v}\n")
+        # with open("./b_align_access.txt", "w") as f:
+        #     for r, c, v in zip(b_align_access.row, b_align_access.col, b_align_access.data):
+        #         f.write(f"{r} {c} {v}\n")
         # =============================================================================        
         # skip: 通过skip让计算与访存更紧凑
         # padding 后面单独加个函数
@@ -77,14 +77,14 @@ class SparseUnit:
             # a_skip_matrix = SparseSkip(a_align_access, skip_strategy=skip_strategy).skip_func
             # b_skip_matrix = SparseSkip(b_align_access, skip_strategy=skip_strategy).skip_func
         
-        np.set_printoptions(threshold=np.inf)
-        with open("./a_skip_matrix.txt", "w") as f:
-            for line in a_skip_matrix:
-                f.write(f"{line}\n")
-        with open("./b_skip_matrix.txt", "w") as f:
-            for line in b_skip_matrix:
-                f.write(f"{line}\n")
-        np.set_printoptions(threshold=1000)
+        # np.set_printoptions(threshold=np.inf)
+        # with open("./a_skip_matrix.txt", "w") as f:
+        #     for line in a_skip_matrix:
+        #         f.write(f"{line}\n")
+        # with open("./b_skip_matrix.txt", "w") as f:
+        #     for line in b_skip_matrix:
+        #         f.write(f"{line}\n")
+        # np.set_printoptions(threshold=1000)
         # =============================================================================        
         # tile: 不同平铺策略得到最终访存pattern
         # 输入 skip_matrix
@@ -97,6 +97,24 @@ class SparseUnit:
             # B_PE_tile_array(np) A_PE_tile_array(np)
             B_PE_tile_array = SparseTile(b_skip_matrix, tile_strategy=tile_strategy, systolic_size=systolic_size, coo_output=False).tile_func
             A_PE_tile_array = SparseTile(a_skip_matrix, tile_strategy=tile_strategy, systolic_size=systolic_size, coo_output=False).tile_func
+        
+        # np.set_printoptions(threshold=np.inf)
+        # with open("./a_tile_matrix.txt", "w") as f:
+        #     for line in A_PE_tile_array:
+        #         f.write(f"{line}\n")
+        # # with open("./b_tile_matrix.txt", "w") as f:
+        # #     for line in B_PE_tile_array:
+        # #         f.write(f"{line}\n")
+        # with open("./b_tile_matrix.txt", "w") as f:
+        #     for i, j, sparse_matrix in B_PE_tile_array:
+        #         f.write(f"Tile ({i}, {j}):\n")
+        #         # COO 格式的行、列和值
+        #         row, col, data = sparse_matrix.row, sparse_matrix.col, sparse_matrix.data
+        #         for r, c, v in zip(row, col, data):
+        #             f.write(f"({r}, {c}) -> {v}\n")
+        #         f.write("\n")
+        # np.set_printoptions(threshold=1000)
+        
         # ====================================================================
         # 地址格式转换，输出最终访存序列(测试时可打开)
         # 得到 B 访存序列

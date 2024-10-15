@@ -1,7 +1,7 @@
 import sys
 sys.path.append("../")
 
-from SP.stride_prefetch import StridePrefetcher
+from ..SP.stride_prefetch import StridePrefetcher
 
 
 class IMP:
@@ -79,7 +79,7 @@ class IMPGroup:
         # 创建指定数量的 IMP 实例
         self.imp_units = [IMP() for _ in range(num_units)]
 
-    def execute_group(self, B, B_addr, A_addr):
+    def prefetch(self, B, B_addr, A_addr):
         """
         执行多个 IMP 子单元的预取操作，处理单个 B 和 A 列表。
         每个 IMP 单元处理 B 和 A 中不同的元素。
@@ -141,7 +141,7 @@ if __name__ == "__main__":
 
     # 循环测试每一组 A 和 B 数据
     for idx in range(len(B)):
-        group_results = imp_group.execute_group(B[idx], B_addr, A_addr)
+        group_results = imp_group.prefetch(B[idx], B_addr, A_addr)
         print(f"测试第 {idx + 1} 组 A 和 B 数据:")
         for unit_id, results in group_results:
             print(f"IMP 批处理 {unit_id} 预测结果:")

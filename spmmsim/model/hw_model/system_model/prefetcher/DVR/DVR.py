@@ -3,12 +3,13 @@ sys.path.append("../")
 # import math 
 
 
-from SP.stride_prefetch import StridePrefetcher
-from utils.ewma_loop_bound_detector import EWMALoopBoundDetectorGroup as LBD
+from ..SP.stride_prefetch import StridePrefetcher
+from ..utils.ewma_loop_bound_detector import EWMALoopBoundDetectorGroup as LBD
 
 
 class DVR:
-    def __init__(self, vector_size, ewma_alpha=0.3, initial_bound=2):
+    def __init__(self, lbd=True, vector_size=4, ewma_alpha=0.3, initial_bound=2):
+        self.lbd = lbd # 如果为False就是每次直接用上次的边界，用于模拟IMP
         self.coeff = 4 # 假设每个元素 4 字节
         self.stride_prefetcher = StridePrefetcher()  # 使用步长预取器
         self.loop_bound_group = LBD(num_detectors=vector_size, alpha=ewma_alpha, initial_bound=initial_bound)  # 基于EWMA 的循环边界检测器
@@ -33,20 +34,27 @@ class DVR:
         """bound和ptr_vector都是PE行数相同的数组, bound[i]表示PE第i行的循环边界
         整合 stride_detector, loop_bound_detector, addr_generator
         """
-        
         predicted_bounds = self.loop_bound_detector(bound)
+        # print(predicted_bounds)
+        
+        # if self.lbd:
+        #     for (detector_id, _, bound) in predicted_bounds:
+        #         predicted_bounds = bound
+            # print(bound)
 
         results = []
         # 对每个PE内处理
-        for (detector_id, _, bound) in predicted_bounds:
+        for (detector_id, _, predicted_bound) in predicted_bounds:
             # for row in range(detector_id):
                 # print(predicted_bounds[row])
                 # print(predicted_bounds)
                 # print(f"第{detector_id}行起始地址{ptr_vector[detector_id]}, 预测边界{round(bound)}")
-                for col in range(round(bound)):
-                    predicted_addr = self.addr_generator(ptr_vector[detector_id], col)
-                    results.append((detector_id, predicted_addr))
-                    # PE第几行的CSR第几个数
+            if self.lbd == False:
+                predicted_bound = bound[detector_id]
+            for col in range(round(predicted_bound)):
+                predicted_addr = self.addr_generator(ptr_vector[detector_id], col)
+                results.append((detector_id, predicted_addr))
+                # PE第几行的CSR第几个数
                 
         return results
 

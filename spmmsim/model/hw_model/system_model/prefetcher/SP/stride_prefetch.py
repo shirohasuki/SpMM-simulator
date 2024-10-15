@@ -23,6 +23,9 @@ class StridePrefetcher:
         # 更新上一次访问的 rs1 地址
         self.last_rs1_address = rs1
 
+        if predicted_address < 0:
+            predicted_address = -1
+        
         return predicted_address, stride
 
     def set_stride(self, new_stride):
