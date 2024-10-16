@@ -26,5 +26,6 @@ $ export PYTHONPATH=$PWD:${PYTHONPATH}
    2. - [x] 添加scratchpad的模型，并能调节和cache(NPU内)比例
    3. - [x] 添加新的计算模式
    4. - [x] 添加对照DVR, IMP, stride prefetch
-   5. - [ ] 添加mem_access文件的ss_start和ss_end信息提取
+   5. - [x] 添加mem_access文件的ss_start和ss_end信息提取
+   6. - [] 添加双边稀疏的正确访存序列生成
 3. - [ ] Workload: 添加八个workload
