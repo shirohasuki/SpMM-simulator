@@ -2,9 +2,9 @@
 
 ### Features
 - Models we have
-  - A cache simulator
+  - A cache/scratchpad mem system simulator
   - A systolic_array model
-  - A sparse compute model
+  - A sparse computing model
 - Tools we have
   - task profiler
   - custom inst decoder
