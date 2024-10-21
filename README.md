@@ -5,6 +5,7 @@
   - A cache/scratchpad mem system simulator
   - A systolic_array model
   - A sparse computing model
+  - supported prefetchers models: DVR, IMP, Stream
 - Tools we have
   - task profiler
   - custom inst decoder
