@@ -1,9 +1,9 @@
 import os
 import math
-from utils.lru import LRU
-from cache.cache import L1Cache, L2Cache
-from dram.dram import DRAM 
-from scratchpad.scratchpad import Scratchpad 
+from .utils.lru import LRU
+from .cache.cache import L1Cache, L2Cache
+from .dram.dram import DRAM 
+from .scratchpad.scratchpad import Scratchpad 
 
 
 
@@ -53,11 +53,10 @@ class MemSim:
         # self.l1_offset_bit  = l1_addr_size-self.l1_index_bit-self.l1_tag_bit
 
 
-    def cache_read(self,addr):
-
+    def cache_read(self, addr):
         data = self.l1cache.read(addr)
         return  data
-    def cache_write(self,addr,data):
+    def cache_write(self, addr, data):
         self.l1cache.write(addr,data)
 
     def spm_read(self,addr):

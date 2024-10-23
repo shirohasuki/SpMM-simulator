@@ -4,7 +4,7 @@ import math
 import sys
 sys.path.append("../")
 
-from utils.lru import LRU
+from ..utils.lru import LRU
 
 
     

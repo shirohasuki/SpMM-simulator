@@ -41,12 +41,12 @@ def sparse_mem_access_pattern(A_matrix, B_matrix, is_one_side_sparsity, \
 
 
 if __name__ == '__main__':
-    A_sparse = SparseMatrix(2048, 2048, 1/16).matrix
+    A_sparse = SparseMatrix(2048, 2048, 1/256).matrix
     csr_A_sparse = SparseRepresentFormat(A_sparse, 'csr').sparse_matrix
     
     B_dense = np.random.randint(0, 10, size=(128, 2048))
     
-    B_sparse = SparseMatrix(2048, 2048, 1/16).matrix
+    B_sparse = SparseMatrix(128, 2048, 1/256).matrix
     csc_B_sparse = SparseRepresentFormat(B_sparse, 'csc').sparse_matrix
 
 
