@@ -98,22 +98,22 @@ class SparseUnit:
             B_PE_tile_array = SparseTile(b_skip_matrix, tile_strategy=tile_strategy, systolic_size=systolic_size, coo_output=False).tile_func
             A_PE_tile_array = SparseTile(a_skip_matrix, tile_strategy=tile_strategy, systolic_size=systolic_size, coo_output=False).tile_func
         
-        # np.set_printoptions(threshold=np.inf)
-        # with open("./a_tile_matrix.txt", "w") as f:
-        #     for line in A_PE_tile_array:
-        #         f.write(f"{line}\n")
-        # # with open("./b_tile_matrix.txt", "w") as f:
-        # #     for line in B_PE_tile_array:
-        # #         f.write(f"{line}\n")
+        np.set_printoptions(threshold=np.inf)
+        with open("./a_tile_matrix.txt", "w") as f:
+            for line in A_PE_tile_array:
+                f.write(f"{line}\n")
         # with open("./b_tile_matrix.txt", "w") as f:
-        #     for i, j, sparse_matrix in B_PE_tile_array:
-        #         f.write(f"Tile ({i}, {j}):\n")
-        #         # COO 格式的行、列和值
-        #         row, col, data = sparse_matrix.row, sparse_matrix.col, sparse_matrix.data
-        #         for r, c, v in zip(row, col, data):
-        #             f.write(f"({r}, {c}) -> {v}\n")
-        #         f.write("\n")
-        # np.set_printoptions(threshold=1000)
+        #     for line in B_PE_tile_array:
+        #         f.write(f"{line}\n")
+        with open("./b_tile_matrix.txt", "w") as f:
+            for i, j, sparse_matrix in B_PE_tile_array:
+                f.write(f"Tile ({i}, {j}):\n")
+                # COO 格式的行、列和值
+                row, col, data = sparse_matrix.row, sparse_matrix.col, sparse_matrix.data
+                for r, c, v in zip(row, col, data):
+                    f.write(f"({r}, {c}) -> {v}\n")
+                f.write("\n")
+        np.set_printoptions(threshold=1000)
         
         # ====================================================================
         # 地址格式转换，输出最终访存序列(测试时可打开)
