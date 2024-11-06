@@ -11,8 +11,8 @@
   - custom inst decoder
 
 ### Run the source code
-1. Set the PYTHONPATH environment variable. 
-
+1. Set the PYTHONPATH environment variable.
+   
 Make sure you are in the root directory.
 ```
 $ export PYTHONPATH=$PWD:${PYTHONPATH}
